@@ -35,12 +35,13 @@ client = commands.Bot(command_prefix="/", intents=intents)
 # Startup of the bot
 @client.event
 async def on_ready():
+    print(f"\n\n THE BOT IS OUT OF ORDER\n")
     print(f"\n[info] Bot is ready as {client.user}\n")
     
     # Set Rich Presence (Activity)
-    activity = disc.Activity(type=disc.ActivityType.unknown, name="Out of Order")
+    activity = disc.Activity(type=disc.ActivityType.playing, name="Out of Order")
     
-    await client.change_presence(status=disc.Status.online, activity=activity)
+    await client.change_presence(status=disc.Status.do_not_disturb, activity=activity)
     await client.tree.sync()  # Sync slash commands
 
 
