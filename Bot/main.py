@@ -2,11 +2,12 @@ from typing import Final
 import os
 import time
 from dotenv import load_dotenv
-import discord as disc
+import discord
 from discord.ext import commands
 from discord.types.activity import ActivityAssets
 import asyncio
 from functions import send_message_to_user
+from pretty_help import PrettyHelp, AppMenu, AppNav
 
 # Load the environment variables
 load_dotenv()
@@ -26,11 +27,13 @@ full_team_cooldowns: dict = {}
 cooldown_period: int = 60  # 60 seconds cooldown
 
 # Create a bot instance
-intents: disc.Intents = disc.Intents.default()
+intents: discord.Intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 
-client = commands.Bot(command_prefix="/", intents=intents)
+help_menu = PrettyHelp(navigation=AppMenu(), color=discord.Colour.green(), delete_invoke=True, no_category="Commands", image_url="https://i.postimg.cc/28LPZLBW/20240821214134-1.jpg", case_insensitive=True, sort_commands=False)
+
+client = commands.Bot(command_prefix="/", intents=intents, help_command=help_menu)
 
 # Startup of the bot
 @client.event
@@ -39,10 +42,21 @@ async def on_ready():
     print(f"\n[info] Bot is ready as {client.user}\n")
     
     # Set Rich Presence (Activity)
-    activity = disc.Activity(type=disc.ActivityType.playing, name="Out of Order")
+    activity = discord.Activity(type=discord.ActivityType.playing, name="Out of Order")
     
-    await client.change_presence(status=disc.Status.do_not_disturb, activity=activity)
+    await client.change_presence(status=discord.Status.do_not_disturb, activity=activity)
     await client.tree.sync()  # Sync slash commands
+
+
+# Error handling for command not found
+@client.event
+async def on_command_error(ctx: commands.Context, error):
+    if isinstance(error, commands.CommandNotFound):
+        print(f"[warning] {ctx.author} tried to use an unknown command in channel {ctx.channel}: {ctx.message.content}\n - {error}")
+        await ctx.send(f"Command not found! Please check your command or use `/help` for available commands.")
+    else:
+        # Raise the error if it's not CommandNotFound
+        raise error
 
 
 def main() -> None:
