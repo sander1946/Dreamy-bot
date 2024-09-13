@@ -3,24 +3,22 @@ from discord.ext import commands
 from discord import app_commands
 import discord
 import discord.ui
-from discord.ui import Select, Button, View
 
 # python imports 
 from dotenv import load_dotenv
-from datetime import datetime
 from typing import Final
 import asyncio
 import time
 import os
 import json
-import sys
-import pickle
+
 
 # local imports
-from functions import send_message_to_user, load_ids, save_transcript
+from functions import load_ids, save_transcript, get_video_urls
 from ticketMenu import PersistentTicketView, PersistentCloseTicketView
 
 # 3rd party imports
+import yt_dlp
 
 
 # Load the environment variables
@@ -35,6 +33,16 @@ ids = load_ids()
 # team settings
 max_teams: int = 4
 cooldown_period: int = 60
+
+# music settings
+yt_dlp_options: dict[str, str] = {"format": "bestaudio/best", 'noplaylist': False, "postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "192"}]}
+ffmpeg_options: dict[str, str] = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5','options': '-vn -filter:a "volume=0.25"'}
+
+# youtube variables
+youtube_base_url: str = 'https://www.youtube.com/'
+youtube_results_url: str = youtube_base_url + 'results?'
+youtube_watch_url: str = youtube_base_url + 'watch?v='
+ytdl: yt_dlp.YoutubeDL = yt_dlp.YoutubeDL(yt_dlp_options)
 
 # Initialize the dictionaries and lists
 teams: dict = {}
@@ -324,6 +332,189 @@ async def unlockteam(interaction: discord.Interaction, member: discord.Member) -
     await interaction.channel.send(f"Team {team_data['emoji']} has been unlocked.")
 
     await wait_message.delete()
+
+
+# Music commands
+@client.tree.command(name="play", description="Play a YouTube song or playlist from a URL.")
+async def play(interaction: discord.Interaction, url: str) -> None:
+    await interaction.response.defer()  # Defer to allow time for processing
+    guild_id = interaction.guild.id
+
+    # Specify the channel ID or name you want the bot to join
+    # You can use the channel ID directly for accuracy, or fetch it by name
+    music_channel = discord.utils.get(interaction.guild.voice_channels, id=ids[guild_id]["music_voice_id"])
+
+    if music_channel is None:
+        await interaction.followup.send("```fix\nThe specified voice channel does not exist. please update the channel ID.```")
+        return
+    
+    if client.voice_clients and guild_id in voice_clients:
+        voice_client = voice_clients[guild_id]
+    else:
+        try:
+            # Connect to the specific voice channel
+            voice_client = await music_channel.connect()
+            voice_clients[guild_id] = voice_client
+        except TypeError as e:
+            print(f"[error][player] Error connecting to the voice channel: {e}")
+            await interaction.followup.send("```fix\nAn error occurred while trying to connect to the voice channel.```")
+            return
+
+    # Get video or playlist URLs
+    video_urls = get_video_urls(url)
+    if video_urls == []:
+        await interaction.followup.send("```fix\nInvalid URL or no video(s) were found.```")
+        return
+    if video_urls == "radio":
+        await interaction.followup.send("```fix\nThis is a radio URL and cannot be processed.")
+        return
+
+    # If there's no queue for this guild, create one
+    if guild_id not in queues:
+        queues[guild_id] = []
+
+    # If the bot is not already playing music, play the first song in the queue
+    if not voice_clients[guild_id].is_playing():
+        # Add video URLs to the queue
+        queues[guild_id].extend(video_urls)
+        await interaction.followup.send("Now playing in the music channel.")
+        await play_next(interaction)
+    else:
+        # Add video URLs infront of the queue
+        queues[guild_id] = [*video_urls, *queues[guild_id]]
+        voice_client.stop()
+        await interaction.followup.send(f"Added {len(video_urls)} to the front of the queue.")
+
+
+@client.tree.command(name="queue", description="Queue the next song or playlist from a YouTube URL.")
+async def queue(interaction: discord.Interaction, url: str) -> None:
+    guild_id = interaction.guild.id
+    
+    # Get video or playlist URLs
+    video_urls = get_video_urls(url)
+    if not video_urls:
+        await interaction.response.send_message("```fix\nInvalid URL or no videos found.```")
+        return
+
+    # If there's no queue for this guild, create one
+    if guild_id not in queues:
+        queues[guild_id] = []
+    
+    # Add the video(s) to the queue
+    queues[guild_id].extend(video_urls)
+    await interaction.response.send_message(f"Added {len(video_urls)} song(s) to the queue.")
+    
+    # If nothing is currently playing, play the first song in the queue
+    if not voice_clients[guild_id].is_playing():
+        await play_next(interaction)
+
+
+@client.tree.command(name="clear_queue", description="Clear the current queue.")
+async def clear_queue(interaction: discord.Interaction) -> None:
+    if interaction.guild.id in queues:
+        queues[interaction.guild.id].clear()
+        await interaction.response.send_message("Queue cleared!")
+    else:
+        await interaction.response.send_message("There is no queue to clear")
+
+
+@client.tree.command(name="pause", description="Pause the currently playing song.")
+async def pause(interaction: discord.Interaction) -> None:
+    try:
+        voice_client = discord.utils.get(client.voice_clients, guild=interaction.guild)
+        if voice_client and voice_client.is_playing():
+            voice_client.pause()
+            await interaction.response.send_message("Paused the song.")
+        else:
+            await interaction.response.send_message("No song is currently playing.")
+    except Exception as e:
+        print(f"[error][player] Error pausing the song: {e}")
+        await interaction.response.send_message(f"```fix\nI'm unable to pause the song at the moment```")
+
+
+@client.tree.command(name="resume", description="Resume the currently paused song.")
+async def resume(interaction: discord.Interaction) -> None:
+    try:
+        voice_client = discord.utils.get(client.voice_clients, guild=interaction.guild)
+        if voice_client and voice_client.is_paused():
+            voice_client.resume()
+            await interaction.response.send_message("Resumed the song.")
+        else:
+            await interaction.response.send_message("No song is currently paused.")
+    except Exception as e:
+        print(f"[error][player] Error resuming the song: {e}")
+        await interaction.response.send_message(f"```fix\nI'm unable to resume the song at the moment```")
+
+
+@client.tree.command(name="skip", description="Skip the currently playing song.")
+async def skip(interaction: discord.Interaction) -> None:
+    guild_id = interaction.guild.id
+    
+    # Get the voice client for the guild
+    voice_client = discord.utils.get(client.voice_clients, guild=interaction.guild)
+    try:
+        if voice_client and voice_client.is_playing():
+            # Stop the current song
+            voice_client.stop()
+
+            # Inform the user that the song was skipped
+            await interaction.response.send_message("Skipped the song.")
+        else:
+            await interaction.response.send_message("No song is currently playing.")
+    except Exception as e:
+        print(f"[error][player] Error skipping the song: {e}")
+        await interaction.response.send_message(f"```fix\nI'm unable to skip the song at the moment```")
+
+
+@client.tree.command(name="stop", description="Stop the currently playing song and disconnect.")
+async def stop(interaction: discord.Interaction) -> None:
+    try:
+        guild_id = interaction.guild_id
+        voice_client = discord.utils.get(client.voice_clients, guild=interaction.guild)
+        if voice_client:
+            queues[guild_id] = []  # Clear the queue
+            voice_client.stop()
+            await voice_client.disconnect()
+            await interaction.response.send_message("Stopped the song and disconnected.")
+        else:
+            await interaction.response.send_message("No song is currently playing.")
+    except Exception as e:
+        print(f"[error][player] Error stopping the song: {e}")
+        await interaction.response.send_message(f"```fix\nI'm unable to stop the song at the moment```")
+
+
+# player functions for music
+async def play_next(interaction: discord.Interaction) -> None:
+    guild_id = interaction.guild.id
+    music_spam_channel = client.get_channel(ids[guild_id]["music_channel_id"])
+    # Check if there are songs in the queue
+    if guild_id in queues and queues[guild_id]:
+        next_url = queues[guild_id].pop(0)  # Get the next song from the queue
+        loop = asyncio.get_event_loop()
+
+        try:
+            # Extract song info
+            data = await loop.run_in_executor(None, lambda: ytdl.extract_info(next_url, download=False))
+            song_url = data['url']
+            player = discord.FFmpegOpusAudio(song_url, **ffmpeg_options)
+
+            # Play the song and set the after callback to play the next song in the queue
+            voice_clients[guild_id].play(player, after=lambda e: asyncio.run_coroutine_threadsafe(play_next(interaction), client.loop))
+
+            await music_spam_channel.send(f"Now playing: **{data['title']}**")
+        except yt_dlp.DownloadError as e:
+            print(f"[error][play_next] Error downloading the song: {e}")
+            await music_spam_channel.send(f"```fix\nAn error occurred while trying to download the song. Skipping to the next song.```")
+            await play_next(interaction)  # Automatically attempt to play the next song
+        except Exception as e:
+            print(f"[error][play_next] Error playing the song: {e}")
+            await music_spam_channel.send(f"```fix\nAn error occurred while trying to play the song. Skipping to the next song.```")
+
+            # If an error occurs, skip to the next song
+            await play_next(interaction)  # Automatically attempt to play the next song
+    else:
+        # No more songs in the queue
+        await music_spam_channel.send("The queue is empty, no more songs to play.")
 
 
 # Reaction handling for team creation
