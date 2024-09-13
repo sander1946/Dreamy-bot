@@ -8,6 +8,8 @@ from discord.ext import commands
 import typing
 import asyncio
 import traceback
+from dotenv import load_dotenv
+import os
 
 # local imports
 from functions import load_ids, get_video_urls
@@ -15,13 +17,17 @@ from functions import load_ids, get_video_urls
 # 3rd party imports
 import yt_dlp
 
+load_dotenv()
+# YOUTUBE_PASSWORD: typing.Final[str] = os.getenv("YOUTUBE_PASSWORD")
+
+
 voice_clients: dict[int, discord.VoiceChannel] = {}
 queues: dict = {}
 
 ids = load_ids()
 
 # music settings
-yt_dlp_options: dict[str, str] = {"format": "bestaudio/best", 'noplaylist': False, "postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "192"}]}
+yt_dlp_options: dict[str, str] = {"username": "oauth2 ", "password ": '', "format": "bestaudio/best", 'noplaylist': False, "postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "192"}]}
 ffmpeg_options: dict[str, str] = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5','options': '-vn -filter:a "volume=0.25"'}
 
 # youtube variables
