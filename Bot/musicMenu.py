@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # discord imports
 import discord
 from discord.ext import commands
@@ -6,7 +8,6 @@ from discord.ext import commands
 import typing
 import asyncio
 import traceback
-from __future__ import annotations
 
 # local imports
 from functions import load_ids, get_video_urls
