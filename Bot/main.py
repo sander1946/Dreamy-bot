@@ -26,7 +26,6 @@ load_dotenv()
 TOKEN: Final[str] = os.getenv("DISCORD_TOKEN")
 TESTING: Final[str] = os.getenv("TESTING")
 bot_prefix: Final[str] = os.getenv("PREFIX")
-YOUTUBE_PASSWORD: Final[str] = os.getenv("YOUTUBE_PASSWORD")
 
 # Load the IDs from the database
 ids = load_ids()
@@ -36,7 +35,7 @@ max_teams: int = 4
 cooldown_period: int = 60
 
 # music settings
-yt_dlp_options: dict[str, str] = {"username": "oauth2", "password": YOUTUBE_PASSWORD, "format": "bestaudio/best", 'noplaylist': False, "postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "192"}]}
+yt_dlp_options: dict[str, str] = {"format": "bestaudio/best", 'noplaylist': False, "postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "192"}]}
 ffmpeg_options: dict[str, str] = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5','options': '-vn -filter:a "volume=0.25"'}
 
 # youtube variables
