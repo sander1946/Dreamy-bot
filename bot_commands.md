@@ -32,6 +32,12 @@
   - **ONLY use this command in case the close button does not work**
   - -# This command requires you to be an sky guardian or above to use
 
+
+### Music Management:
+- **/Music_menu**
+  - This command creates an music menu in the current channel that will allow anyone to control the music part of the bot. this menu has 6 buttons that all effect the player in some way, shape of form
+  - -# This command requires you to be an sky guardian or above to use
+
 ### General Commands (that anyone can use):
 
 - **/Help**
