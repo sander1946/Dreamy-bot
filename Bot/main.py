@@ -3,6 +3,7 @@ from discord.ext import commands
 from discord import app_commands
 import discord
 import discord.ui
+from discord.ui import View, Select
 
 # python imports 
 from dotenv import load_dotenv
@@ -108,7 +109,6 @@ async def ticket(interaction: discord.Interaction) -> None:
 
 @client.tree.command(name="force_close_ticket", description="Force close a ticket. This will CLOSE ANY channel and send the logs to the log channel.")
 async def force_close_ticket(interaction: discord.Interaction) -> None:
-    await interaction.response.defer()
     sky_guardians_role = interaction.guild.get_role(ids[interaction.guild.id]["sky_guardians_role_id"])
     if not sky_guardians_role:
         print("[error][tickets] Sky Guardians role not found. Please provide a valid role ID.")
@@ -122,6 +122,24 @@ async def force_close_ticket(interaction: discord.Interaction) -> None:
         return
     
     if interaction.user.id != ids[interaction.guild.id]["owner_id"] or sky_guardians_role in interaction.user.roles or tech_oracle_role in interaction.user.roles:
+        select = Select(options=[
+            discord.SelectOption(label="Yes, close this ticket", value="01", emoji="☑️", description="This closes the ticket and will mark it as solved"),
+            discord.SelectOption(label="No, keep this ticket open", value="02", emoji="✖️", description="This will keep the ticket open and allow you to continue the conversation"),
+        ])
+        
+        select.callback = ticket_select_callback
+        view = View(timeout=60)
+        view.add_item(select)
+        await interaction.response.send_message("Do you really want to close the ticket?", view=view, ephemeral=True, delete_after=60)
+    
+    else:
+        print(f"[warning][tickets] {interaction.user.name} does not have prems to close ticket {interaction.channel.name}")
+        await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+
+
+async def ticket_select_callback(interaction: discord.Interaction):
+    await interaction.response.defer()
+    if interaction.data["values"][0] == "01": # Yes, close this ticket
         await interaction.followup.send("Ticket will be force closed.")
 
         ticket_logs = ""
@@ -129,17 +147,18 @@ async def force_close_ticket(interaction: discord.Interaction) -> None:
 
         ticket_logs_channel = client.get_channel(ids[interaction.guild.id]["ticket_log_channel_id"])
         if ticket_logs_channel:
-            await ticket_logs_channel.send(f"Transcript for {interaction.channel.name}:", file=discord.File(path))
+            await ticket_logs_channel.send(f"Transcript for {interaction.channel.name}:\nThe ticket channel {interaction.channel.name} has been **force** closed by {interaction.user.name} a.k.a {interaction.user.display_name}", file=discord.File(path))
         else:
             print("[warning][tickets] Ticket logs channel not found. Please provide a valid channel name.")
         print(f"[tickets] Ticket closed by user {interaction.user.name} in channel {interaction.channel.name}")
         await interaction.channel.delete()
         await interaction.user.send("Your ticket has been closed successfully. The Transcript of the ticket has been saved.")
         await interaction.user.send(f"Transcript for {interaction.channel.name}:", file=discord.File(path))
-    else:
-        print(f"[warning][tickets] {interaction.user.name} does not have prems to close ticket {interaction.channel.name}")
-        await interaction.followup.send("You do not have permission to use this command.", ephemeral=True)
-
+    elif interaction.data["values"][0] == "02": # No, keep this ticket open
+        await interaction.followup.send("This ticket will remain open.", ephemeral=True)
+    
+    else: # Invalid selection
+        await interaction.followup.send("Invalid selection", ephemeral=True)
 
 # info commands
 @client.tree.command(name="timers", description="Gives the link to all of the timers.")
