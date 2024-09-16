@@ -171,7 +171,7 @@ async def timers(interaction: discord.Interaction) -> None:
 
 # Team commands
 @client.tree.command(name="createteam", description="Create a team with a leader and an emoji.")
-async def createteam(interaction: discord.Interaction, member: discord.Member, emoji: str) -> None:
+async def createteam(interaction: discord.Interaction, member: discord.Member, emoji: str, max_size: int = 8) -> None:
     await interaction.response.defer(ephemeral=True)  # Defer the response to get more time
     allowed_roles: list[int] = [ids[interaction.guild.id]["sancturary_keeper_role_id"], ids[interaction.guild.id]["event_luminary_role_id"], ids[interaction.guild.id]["sky_guardians_role_id"], ids[interaction.guild.id]["tech_oracle_role_id"]]
     if not any(role.id in allowed_roles for role in interaction.user.roles):
@@ -186,23 +186,24 @@ async def createteam(interaction: discord.Interaction, member: discord.Member, e
         await interaction.followup.send("The maximum number of teams has been reached. Cannot create a new team.", ephemeral=True)
         return
     
-    emoji = emoji.strip(":")  # Remove the colons from the emoji if present
+    emoji = emoji.strip()  # Remove the colons from the emoji if present
     print(f"[teams] Creating a team with {member.name}:{member.id} as the leader and {emoji} as the emoji.")
     
     await interaction.followup.send(f"Team {emoji} has been created!", ephemeral=False)
     team_message = f"__**Group Leader**__\n{member.mention} {emoji}\n\n__**Members**__\n"
 
-    message = await interaction.channel.send(team_message)
+    message = await interaction.channel.send(team_message, allowed_mentions=discord.AllowedMentions.none())
 
     # Add the bot's reaction
     await message.add_reaction(emoji)
+    
 
     # Save team information
     teams[member.id] = {
         "message_id": message.id,
         "emoji": emoji,
         "members": [],
-        "max_members": 8,  # Max members in the team
+        "max_members": max_size,  # Max members in the team
         "leader_id": member.id,
         "reaction_count": 1,  # Start with 1 to count the team leader
         "last_locked_message_time": 0,
@@ -210,6 +211,7 @@ async def createteam(interaction: discord.Interaction, member: discord.Member, e
         "channel_id": interaction.channel.id,  # Track the channel ID
         "resetting": False  # Track if the team is currently resetting
     }
+    print(f"[debug][teams] {teams[member.id]}")
 
 
 @client.tree.command(name="closeteam", description="Close the given leader's team.")
@@ -236,7 +238,7 @@ async def closeteam(interaction: discord.Interaction, member: discord.Member) ->
     await message.delete()  # Delete the message
 
     del teams[member.id]  # Remove the team from the dictionary
-    await interaction.channel.send(f"Team {team_data['emoji']} led by {member.mention} has been closed.")
+    await interaction.channel.send(f"Team {team_data['emoji']} led by {member.mention} has been closed.", allowed_mentions=discord.AllowedMentions.none())
     await interaction.followup.send(f"Team {team_data['emoji']} led by {member.mention} has been closed.", ephemeral=False)
 
 
@@ -263,8 +265,8 @@ async def lockteam(interaction: discord.Interaction, member: discord.Member) -> 
     message = await interaction.channel.fetch_message(message_id)
     
     # Update the message to indicate the team is locked
-    updated_message = message.content + "\n\n__**Team Full**__ - This team has been locked ^^"
-    update_queue.append((message_id, updated_message))
+    updated_message = message.content + "\n-# __ This team has been locked ^^ __"
+    await message.edit(content=updated_message, allowed_mentions=discord.AllowedMentions.none())
 
     # Set the locked flag for the team
     teams[member.id]["locked"] = True
@@ -331,7 +333,7 @@ async def unlockteam(interaction: discord.Interaction, member: discord.Member) -
 
         if member_names_str:
             final_message += f"\n\n{member_names_str}"
-        await message.edit(content=final_message)
+        await message.edit(content=final_message, allowed_mentions=discord.AllowedMentions.none())
 
     # Remove resetting status and unlock the team
     teams[member.id]["resetting"] = False
@@ -377,7 +379,11 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent) -> None:
 
     for team_id, team in teams.items():
         if message_id == team["message_id"]:
-            emoji = payload.emoji.name
+            if payload.emoji.is_custom_emoji():
+                emoji = f"<:{payload.emoji.name}:{payload.emoji.id}>"
+            else:
+                emoji = payload.emoji.name
+            print(f"[teams] User {user_id} reacted with {emoji} to team {team_id}")
 
             if user_id != client.user.id and emoji == team["emoji"]:
                 team_leader_id = team["leader_id"]
@@ -411,17 +417,6 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent) -> None:
                             print(f"this team now has {len(team['members']) + 1} members including the leader")
                             print(team["members"])
                         else:
-                            # If team is full, apply cooldown
-                            team_leader = client.get_user(team_leader_id)
-                            if team_leader is not None:
-                                if team_leader_id not in full_team_cooldowns or time.time() - full_team_cooldowns[team_leader_id] > cooldown_period:
-                                    await channel.send(
-                                        f"The team of {team_leader.mention} :{team['emoji']}:\n"
-                                        f"is full - Consider joining another team! {user.mention}"
-                                    )
-                                    full_team_cooldowns[team_leader_id] = time.time()
-                            else:
-                                print(f"[teams] Could not find user with ID {team_leader_id}")
                             return  # Do not add user if team is full
 
                         # Update the team message
@@ -463,12 +458,14 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent) -> None:
                         # Update the message
                         message = await channel.fetch_message(message_id)
                         print(f"[teams] Updating message {message_id}")
-                        await message.edit(content=updated_message)
+                        await message.edit(content=updated_message, allowed_mentions=discord.AllowedMentions.none())
 
                         # Lock the team if it's full
                         if len(team["members"]) + 1 >= team["max_members"]:
                             team["locked"] = True
-                            await channel.send(f"{client.get_user(team_leader_id).mention} group is now locked!")
+                            updated_message = updated_message + "\n-# __ This team has been locked ^^ __"
+                            await message.edit(content=updated_message, allowed_mentions=discord.AllowedMentions.none())
+                            await channel.send(f"Team {team['emoji']} has been locked.")
 
                     else:
                         # User is already in the team
@@ -525,7 +522,7 @@ async def on_raw_reaction_remove(payload: discord.RawReactionActionEvent) -> Non
 
                 channel = client.get_channel(channel_id)
                 message = await channel.fetch_message(message_id)
-                await message.edit(content=updated_message)
+                await message.edit(content=updated_message, allowed_mentions=discord.AllowedMentions.none())
                 print(f"[teams] Updated message {message_id}")
             except Exception as e:
                 print(f"[teams] Failed to update message {message_id}: {e}")

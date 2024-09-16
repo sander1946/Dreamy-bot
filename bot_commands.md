@@ -6,7 +6,7 @@
 
 - **/Createteam `<member>` `<emoji>`**
   - This command creates a team consisting of a maximum of 8 player, the command has 2 arguments and that is a member that will lead th team (this can be anyone on the server) and a emoji that is used an a reaction button.
-  - The Emoji must be a default discord emoji, otherwise it will not work
+  - The Emoji must be a DSS or default discord emoji, otherwise it will not work
   - -# The command requires you to be an event luminary or above to use
   
 - **/Lockteam `<member>`**
