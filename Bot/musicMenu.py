@@ -22,7 +22,8 @@ load_dotenv()
 
 
 voice_clients: dict[int, discord.VoiceChannel] = {}
-queues: dict = {}
+queues: dict[int, dict[str, str]] = {}
+
 
 ids = load_ids()
 
@@ -52,11 +53,13 @@ class BaseModal(discord.ui.Modal):
     # make sure any errors don't get ignored
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
         tb = "".join(traceback.format_exception(type(error), error, error.__traceback__))
-        message = f"An error occurred while processing the interaction:\n```py\n{tb}\n```"
+        message = f"An error occurred while processing the URL, Please check the URL and try again."
+        print(f"[error][modal] Unable to process the interaction")
         try:
             await interaction.response.send_message(message, ephemeral=True)
         except discord.InteractionResponded:
-            await interaction.edit_original_response(content=message, view=None)
+            print(f"[error][modal] {message}")
+        #     await interaction.edit_original_response(content=message, view=PersistentMusicView())
         self.stop()
 
     @property
@@ -67,10 +70,10 @@ class BaseModal(discord.ui.Modal):
 class PersistentMusicView(discord.ui.View):
     def __init__(self, client: commands.Bot):
         super().__init__(timeout=None)  
-        self.add_item(discord.ui.Button(emoji="<:Pause:1284205904933158952>", style=discord.ButtonStyle.primary, custom_id="pause", row=1))
-        self.children[-1].callback = self.pause_callback
+        self.add_item(discord.ui.Button(emoji="<:Back:1284803501486243960>", style=discord.ButtonStyle.primary, custom_id="back", row=1))
+        self.children[-1].callback = self.back_callback
         self.add_item(discord.ui.Button(emoji="<:Play:1284205906820595865>", style=discord.ButtonStyle.primary, custom_id="resume", row=1))
-        self.children[-1].callback = self.resume_callback
+        self.children[-1].callback = self.pause_resume_callback
         self.add_item(discord.ui.Button(emoji="<:Skip:1284205910365044847>", style=discord.ButtonStyle.success, custom_id="skip", row=1))
         self.children[-1].callback = self.skip_callback
         self.add_item(discord.ui.Button(emoji="<:Queue:1284205908473417789>", style=discord.ButtonStyle.secondary, custom_id="queue", row=2))
@@ -79,31 +82,66 @@ class PersistentMusicView(discord.ui.View):
         self.children[-1].callback = self.clear_queue_callback
         self.add_item(discord.ui.Button(emoji="<:Close:1284205903343648870>", style=discord.ButtonStyle.danger, custom_id="stop", row=2))
         self.children[-1].callback = self.stop_callback
+        self.add_item(discord.ui.Button(emoji="<:Close:1284205903343648870>", style=discord.ButtonStyle.secondary, disabled=True, custom_id="loop", row=3))
+        self.children[-1].callback = self.loop_callback
+        self.add_item(discord.ui.Button(emoji="<:Close:1284205903343648870>", style=discord.ButtonStyle.secondary, disabled=True, custom_id="shuffle", row=3))
+        self.children[-1].callback = self.shuffle_callback
+        self.add_item(discord.ui.Button(emoji="<:Close:1284205903343648870>", style=discord.ButtonStyle.secondary, disabled=True, custom_id="volume_up", row=3))
+        self.children[-1].callback = self.volume_up_callback
+        self.add_item(discord.ui.Button(emoji="<:Close:1284205903343648870>", style=discord.ButtonStyle.secondary, disabled=True, custom_id="volume_down", row=3))
+        self.children[-1].callback = self.volume_down_callback
         self.client = client
     
-    async def pause_callback(self, interaction: discord.Interaction) -> None:
-        try:
-            voice_client = discord.utils.get(self.client.voice_clients, guild=interaction.guild)
-            if voice_client and voice_client.is_playing():
-                voice_client.pause()
-                await interaction.response.send_message("Paused the song.", delete_after=10)
-            else:
-                await interaction.response.send_message("No song is currently playing.", ephemeral=True)
-        except Exception as e:
-            print(f"[error][player] Error pausing the song: {e}")
-            await interaction.response.send_message(f"```fix\nI'm unable to pause the song at the moment```", ephemeral=True)
+    async def back_callback(self, interaction: discord.Interaction) -> None:
+        guild_id = interaction.guild.id
     
-    async def resume_callback(self, interaction: discord.Interaction) -> None:
+        # Get the voice client for the guild
+        voice_client = discord.utils.get(self.client.voice_clients, guild=interaction.guild)
+        try:
+            if voice_client and voice_client.is_playing():
+                
+                current_song = queues[guild_id]["current"]["original_url"] if queues[guild_id]["current"] else None
+                previous_url = queues[guild_id]["played"].pop(-1) if queues[guild_id]["played"] else None
+                if not current_song and previous_url:
+                    queues[guild_id]["queue"] = [previous_url, *queues[guild_id]["queue"]]
+                if previous_url and current_song:
+                    queues[guild_id]["queue"] = [previous_url, current_song, *queues[guild_id]["queue"]]
+                else:
+                    await interaction.response.send_message(f"{interaction.user.mention} No previous song found.", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
+                    return
+                # Stop the current song
+                voice_client.stop() # This will trigger the after callback to play the next song in the queue
+
+                # Inform the user that the song was skipped
+                await interaction.response.send_message(f"{interaction.user.mention} Playing previous song.", delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
+            else:
+                previous_url = queues[guild_id]["played"].pop(-1) if queues[guild_id]["played"] else None
+                if previous_url:
+                    queues[guild_id]["queue"] = [previous_url, *queues[guild_id]["queue"]]
+                    voice_client.stop() # This will trigger the after callback to play the next song in the queue
+                    await interaction.response.send_message(f"{interaction.user.mention} Playing previous song.", delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
+                else:
+                    await interaction.response.send_message(f"{interaction.user.mention} No previous song found.", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
+        
+        except Exception as e:
+            print(f"[error][player] Error skipping the song: {e}")
+            await interaction.response.send_message(f"```fix\nI'm unable to skip the song at the moment```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
+
+    async def pause_resume_callback(self, interaction: discord.Interaction) -> None:
         try:
             voice_client = discord.utils.get(self.client.voice_clients, guild=interaction.guild)
-            if voice_client and voice_client.is_paused():
-                voice_client.resume()
-                await interaction.response.send_message("Resumed the song.", delete_after=10)
+            if voice_client:
+                if voice_client.is_paused():
+                    voice_client.resume()
+                    await interaction.response.send_message(f"{interaction.user.mention} Resumed the song.", delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
+                else:
+                    voice_client.pause()
+                    await interaction.response.send_message(f"{interaction.user.mention} Paused the song.", delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
             else:
-                await interaction.response.send_message("No song is currently paused.", ephemeral=True)
+                await interaction.response.send_message(f"{interaction.user.mention} Im not currently playing anything!", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
         except Exception as e:
             print(f"[error][player] Error resuming the song: {e}")
-            await interaction.response.send_message(f"```fix\nI'm unable to resume the song at the moment```", ephemeral=True)
+            await interaction.response.send_message(f"```fix\nI'm unable to pause or resume the song at the moment```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
 
     async def skip_callback(self, interaction: discord.Interaction) -> None:
         guild_id = interaction.guild.id
@@ -113,15 +151,14 @@ class PersistentMusicView(discord.ui.View):
         try:
             if voice_client and voice_client.is_playing():
                 # Stop the current song
-                voice_client.stop()
+                voice_client.stop() # This will trigger the after callback to play the next song in the queue
 
-                # Inform the user that the song was skipped
-                await interaction.response.send_message("Skipped the song.", delete_after=10)
+                await interaction.response.send_message(f"{interaction.user.mention} Skipped the song.", delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
             else:
-                await interaction.response.send_message("No song is currently playing.", ephemeral=True)
-        except Exception as e:
+                await interaction.response.send_message(f"{interaction.user.mention} No song is currently playing.", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
+        except ValueError as e:
             print(f"[error][player] Error skipping the song: {e}")
-            await interaction.response.send_message(f"```fix\nI'm unable to skip the song at the moment```", ephemeral=True)
+            await interaction.response.send_message(f"```fix\nI'm unable to skip the song at the moment```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
     
     async def queue_callback(self, interaction: discord.Interaction) -> None:
         self.queue_modal = BaseModal(title="Enter the youtube URL")
@@ -131,7 +168,6 @@ class PersistentMusicView(discord.ui.View):
         await interaction.response.send_modal(self.queue_modal)
         
     async def queue_modal_callback(self, interaction: discord.Interaction) -> None:
-        await interaction.response.defer()  # Defer to allow time for processing
         url = typing.cast(discord.ui.TextInput[BaseModal], self.queue_modal.children[0]).value
 
         guild_id = interaction.guild.id
@@ -141,7 +177,16 @@ class PersistentMusicView(discord.ui.View):
         music_channel = discord.utils.get(interaction.guild.voice_channels, id=ids[guild_id]["music_voice_id"])
 
         if music_channel is None:
-            await interaction.followup.send("```fix\nThe specified voice channel does not exist. please update the channel ID.```", ephemeral=True)
+            await interaction.response.send_message("```fix\nThe specified voice channel does not exist. please update the channel ID.```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
+            return
+        
+        # Get video or playlist URLs
+        video_urls = get_video_urls(url)
+        if video_urls == []:
+            await interaction.response.send_message("```fix\nInvalid URL or no video(s) were found.```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
+            return
+        if video_urls == "radio":
+            await interaction.response.send_message("```fix\nThis is a radio URL and cannot be processed.", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
             return
         
         if self.client.voice_clients and guild_id in voice_clients:
@@ -153,81 +198,120 @@ class PersistentMusicView(discord.ui.View):
                 voice_clients[guild_id] = voice_client
             except TypeError as e:
                 print(f"[error][player] Error connecting to the voice channel: {e}")
-                await interaction.followup.send("```fix\nAn error occurred while trying to connect to the voice channel.```", ephemeral=True)
+                await interaction.response.send_message("```fix\nAn error occurred while trying to connect to the voice channel.```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
                 return
-
-        # Get video or playlist URLs
-        video_urls = get_video_urls(url)
-        if video_urls == []:
-            await interaction.followup.send("```fix\nInvalid URL or no video(s) were found.```", ephemeral=True)
-            return
-        if video_urls == "radio":
-            await interaction.followup.send("```fix\nThis is a radio URL and cannot be processed.", ephemeral=True)
-            return
 
         # If there's no queue for this guild, create one
         if guild_id not in queues:
-            queues[guild_id] = []
+            queues[guild_id] = {"played":[], "current": {}, "queue":[]}
 
         # If the bot is not already playing music, play the first song in the queue
         if not voice_clients[guild_id].is_playing():
             # Add video URLs to the queue
-            queues[guild_id].extend(video_urls)
+            queues[guild_id]["queue"] = [*queues[guild_id]["queue"], *video_urls]
             if len(video_urls) > 1:
-                await interaction.followup.send(f"Added {len(video_urls)-1} to the queue.", ephemeral=True)
-            await interaction.followup.send("Now playing in the music channel.", ephemeral=True)
+                await interaction.response.send_message(f"{interaction.user.mention} Playing the queue and added {len(video_urls)-1} song(s) to the queue.", delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
+            else:
+                await interaction.response.send_message(f"{interaction.user.mention} Playing the song", delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
             await self.play_next(interaction)
         else:
-            # Add video URLs infront of the queue
-            queues[guild_id] = [*queues[guild_id], *video_urls]
-            await interaction.followup.send(f"Added {len(video_urls)} to the queue.", ephemeral=True)
+            # Add video URLs to the queue
+            queues[guild_id]["queue"] = [*queues[guild_id]["queue"], *video_urls]
+            await interaction.response.send_message(f"{interaction.user.mention} Added {len(video_urls)} song(s) to the queue.", delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
     
     async def clear_queue_callback(self, interaction: discord.Interaction) -> None:
-        if interaction.guild.id in queues:
-            queues[interaction.guild.id].clear()
-            await interaction.response.send_message("Queue cleared!", delete_after=10)
+        guild_id = interaction.guild_id
+        if guild_id in queues:
+            queues.pop(guild_id)
+            await interaction.response.send_message(f"{interaction.user.mention} Queue and history cleared!", delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
         else:
-            await interaction.response.send_message("There is no queue to clear", ephemeral=True)
+            await interaction.response.send_message(f"{interaction.user.mention} There is no queue or history to clear", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
     
     async def stop_callback(self, interaction: discord.Interaction) -> None:
         try:
             guild_id = interaction.guild_id
-            voice_client = discord.utils.get(self.client.voice_clients, guild=interaction.guild)
-            if voice_client:
-                queues[guild_id] = []  # Clear the queue
+            if guild_id in voice_clients:
+                voice_client = voice_clients[guild_id]
+                queues.pop(guild_id)
                 voice_client.stop()
                 await voice_client.disconnect()
-                await interaction.response.send_message("Stopped the song and disconnected.", delete_after=10)
+                voice_clients.pop(guild_id)
+                await interaction.response.send_message(f"{interaction.user.mention} Stopped the song and disconnected.", delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
             else:
-                await interaction.response.send_message("No song is currently playing.", ephemeral=True)
+                await interaction.response.send_message(f"{interaction.user.mention} Im not currently connected", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
+        except KeyError as e:
+            guild_id = interaction.guild_id
+            if guild_id in voice_clients:
+                voice_client = voice_clients[guild_id]
+                voice_client.stop()
+                await voice_client.disconnect()
+                voice_clients.pop(guild_id)
+                await interaction.response.send_message(f"{interaction.user.mention} Stopped the song and disconnected.", delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
         except Exception as e:
             print(f"[error][player] Error stopping the song: {e}")
-            await interaction.response.send_message(f"```fix\nI'm unable to stop the song at the moment```", ephemeral=True)
+            await interaction.response.send_message(f"```fix\nI'm unable to stop the song at the moment```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
+    
+    async def loop_callback(self, interaction: discord.Interaction) -> None:
+        pass
+    
+    async def shuffle_callback(self, interaction: discord.Interaction) -> None:
+        pass
+    
+    async def volume_mute_callback(self, interaction: discord.Interaction) -> None:
+        pass
+    
+    async def volume_up_callback(self, interaction: discord.Interaction) -> None:
+        pass
+    
+    async def volume_down_callback(self, interaction: discord.Interaction) -> None:
+        pass
     
     # player functions for music
     async def play_next(self, interaction: discord.Interaction) -> None:
         guild_id = interaction.guild.id
         music_spam_channel = self.client.get_channel(ids[guild_id]["music_channel_id"])
         # Check if there are songs in the queue
-        if guild_id in queues and queues[guild_id]:
-            next_url = queues[guild_id].pop(0)  # Get the next song from the queue
+        if guild_id in queues and queues[guild_id]["queue"]:
+            next_url = queues[guild_id]["queue"].pop(0)  # Get the next song from the queue
+            previous_url = queues[guild_id]["current"]["original_url"] if queues[guild_id]["current"] else None
+            if previous_url:
+                queues[guild_id]["played"].append(previous_url)  # Add the song to the played list
             loop = asyncio.get_event_loop()
 
             try:
                 # Extract song info
                 data = await loop.run_in_executor(None, lambda: ytdl.extract_info(next_url, download=False))
+                queues[guild_id]["current"] = data  # Set the current song to the next song
+                # print(f"[debug] Playing: {queues[guild_id]['current']['title']}\n[debug] current first 10 queue items: {queues[guild_id]['queue'][0:10]}\n[debug] played: {queues[guild_id]['played']}")
                 song_url = data['url']
+                
                 player = discord.FFmpegOpusAudio(song_url, **ffmpeg_options)
 
                 # Play the song and set the after callback to play the next song in the queue
-                voice_clients[guild_id].play(player, after=lambda e: asyncio.run_coroutine_threadsafe(self.play_next(interaction), self.client.loop))
+                if not voice_clients[guild_id].is_connected():
+                    music_channel = discord.utils.get(interaction.guild.voice_channels, id=ids[guild_id]["music_voice_id"])
 
-                await music_spam_channel.send(f"Now playing: **{data['title']}**", delete_after=10*60) # Delete after 10 minutes to keep channel a bit clean
+                    if music_channel is None:
+                        await interaction.response.send_message("```fix\nThe specified voice channel does not exist. please update the channel ID.```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
+                        return
+                    try:
+                        # Connect to the specific voice channel
+                        voice_client = await music_channel.connect()
+                        voice_clients[guild_id] = voice_client
+                    except TypeError as e:
+                        print(f"[error][player] Error connecting to the voice channel: {e}")
+                        await interaction.response.send_message("```fix\nAn error occurred while trying to connect to the voice channel.```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
+                        return
+                try:
+                    voice_clients[guild_id].play(player, after=lambda e: asyncio.run_coroutine_threadsafe(self.play_next(interaction), self.client.loop))
+                except discord.errors.ClientException:
+                    pass
+                await music_spam_channel.send(f"Now playing: **{data['title']}**", delete_after=20*60) # Delete after 20 minutes to keep channel a bit clean
             except yt_dlp.DownloadError as e:
                 print(f"[error][play_next] Error downloading the song: {e}")
                 await music_spam_channel.send(f"```fix\nAn error occurred while trying to download the song. Skipping to the next song.```", delete_after=10)
                 await self.play_next(interaction)  # Automatically attempt to play the next song
-            except Exception as e:
+            except ValueError as e:
                 print(f"[error][play_next] Error playing the song: {e}")
                 await music_spam_channel.send(f"```fix\nAn error occurred while trying to play the song. Skipping to the next song.```", delete_after=10)
 
