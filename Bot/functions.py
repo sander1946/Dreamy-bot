@@ -19,6 +19,7 @@ load_dotenv()
 DATABASE_ENDPOINT = os.getenv("DATABASE_ENDPOINT")
 DATABASE_USER = os.getenv("DATABASE_USERNAME")
 DATABASE_PASSWORD = os.getenv("DATABASE_PASSWORD")
+DATABASE_PORT = os.getenv("DATABASE_PORT")
 
 
 def load_ids() -> dict[int, dict[str, int]]:
@@ -70,13 +71,19 @@ async def save_transcript(channel: discord.TextChannel, ticket_logs: str) -> Non
     dir = os.path.dirname(__file__)
     path = f"{dir}/tickets/ticket-{channel.name}.txt"
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "x") as f:
-        print(f"[tickets] Writing transcript for ticket {channel.name}")
-        async for message in channel.history(limit=None):
-            ticket_logs = f"{message.author.name}: {message.content}\n" + str(ticket_logs)
-        ticket_logs = f"Transcript for {channel.name}:\n" + "```\n"+ str(ticket_logs) + "```"
-        f.write(ticket_logs)
-    return path
+
+    try:
+        # Open the file with UTF-8 encoding and handle any encoding errors gracefully
+        with open(path, "w", encoding="utf-8", errors="replace") as f:
+            print(f"[tickets] Writing transcript for ticket {channel.name}")
+            async for message in channel.history(limit=None):
+                # Append the message with the author's name to the logs
+                ticket_logs = f"{message.author.name}: {message.content}\n" + ticket_logs
+            ticket_logs = f"Transcript for {channel.name}:\n" + "```\n" + ticket_logs + "```"
+            f.write(ticket_logs)
+        return path
+    except Exception as e:
+        print(f"Error saving transcript for {channel.name}: {e}")
 
 
 # Function to create MySQL database connection
@@ -87,7 +94,8 @@ def create_connection(database_name: str) -> mysql.connector.connection.MySQLCon
             host=DATABASE_ENDPOINT,
             user=DATABASE_USER,
             password=DATABASE_PASSWORD,
-            database=database_name
+            database=database_name,
+            port=DATABASE_PORT
         )
         if connection.is_connected():
             print(f"Connection to MySQL {database_name} DB successful")

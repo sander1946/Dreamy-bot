@@ -93,13 +93,13 @@ class PersistentMusicView(discord.ui.View):
         self.client = client
     
     async def back_callback(self, interaction: discord.Interaction) -> None:
+        print(f"[back_callback] {interaction.user.display_name} pressed the back button")
         guild_id = interaction.guild.id
     
         # Get the voice client for the guild
         voice_client = discord.utils.get(self.client.voice_clients, guild=interaction.guild)
         try:
             if voice_client and voice_client.is_playing():
-                
                 current_song = queues[guild_id]["current"]["original_url"] if queues[guild_id]["current"] else None
                 previous_url = queues[guild_id]["played"].pop(-1) if queues[guild_id]["played"] else None
                 if not current_song and previous_url:
@@ -128,6 +128,7 @@ class PersistentMusicView(discord.ui.View):
             await interaction.response.send_message(f"```fix\nI'm unable to skip the song at the moment```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
 
     async def pause_resume_callback(self, interaction: discord.Interaction) -> None:
+        print(f"[pause_resume_callback] {interaction.user.display_name} pressed the pause/resume button")
         try:
             voice_client = discord.utils.get(self.client.voice_clients, guild=interaction.guild)
             if voice_client:
@@ -144,6 +145,7 @@ class PersistentMusicView(discord.ui.View):
             await interaction.response.send_message(f"```fix\nI'm unable to pause or resume the song at the moment```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
 
     async def skip_callback(self, interaction: discord.Interaction) -> None:
+        print(f"[skip_callback] {interaction.user.display_name} pressed the skip button")
         guild_id = interaction.guild.id
     
         # Get the voice client for the guild
@@ -161,6 +163,7 @@ class PersistentMusicView(discord.ui.View):
             await interaction.response.send_message(f"```fix\nI'm unable to skip the song at the moment```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
     
     async def queue_callback(self, interaction: discord.Interaction) -> None:
+        print(f"[queue_callback] {interaction.user.display_name} pressed the queue button")
         self.queue_modal = BaseModal(title="Enter the youtube URL")
         
         self.queue_modal.add_item(discord.ui.TextInput(label="URL", placeholder="Enter the YouTube URL of the Song or Playlist", min_length=15, max_length=100))
@@ -169,7 +172,7 @@ class PersistentMusicView(discord.ui.View):
         
     async def queue_modal_callback(self, interaction: discord.Interaction) -> None:
         url = typing.cast(discord.ui.TextInput[BaseModal], self.queue_modal.children[0]).value
-
+        print(f"[queue_modal_callback] {interaction.user.display_name} entered the URL: {url}")
         guild_id = interaction.guild.id
 
         # Specify the channel ID or name you want the bot to join
@@ -220,6 +223,7 @@ class PersistentMusicView(discord.ui.View):
             await interaction.response.send_message(f"{interaction.user.mention} Added {len(video_urls)} song(s) to the queue.", delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
     
     async def clear_queue_callback(self, interaction: discord.Interaction) -> None:
+        print(f"[clear_queue_callback] {interaction.user.display_name} pressed the clear queue button")
         guild_id = interaction.guild_id
         if guild_id in queues:
             queues.pop(guild_id)
@@ -228,6 +232,7 @@ class PersistentMusicView(discord.ui.View):
             await interaction.response.send_message(f"{interaction.user.mention} There is no queue or history to clear", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
     
     async def stop_callback(self, interaction: discord.Interaction) -> None:
+        print(f"[stop_callback] {interaction.user.display_name} pressed the stop button")
         try:
             guild_id = interaction.guild_id
             if guild_id in voice_clients:
