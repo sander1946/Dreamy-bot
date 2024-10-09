@@ -97,8 +97,9 @@ def create_connection(database_name: str) -> mysql.connector.connection.MySQLCon
             database=database_name,
             port=DATABASE_PORT
         )
-        if connection.is_connected():
-            print(f"Connection to MySQL {database_name} DB successful")
+        if not connection.is_connected():
+            print(f"Connection to {database_name} database failed.")
+        
     except Error as e:
         print(f"The error '{e}' occurred")
     return connection
@@ -152,7 +153,8 @@ def delete_query(connection: PooledMySQLConnection | MySQLConnectionAbstract, qu
 def close_connection(connection: PooledMySQLConnection | MySQLConnectionAbstract):
     if connection.is_connected():
         connection.close()
-        print("The connection is closed")
+    if connection.is_connected():
+        print("Failed to close the connection.")
 
 
 def save_ticket_to_db(connection: PooledMySQLConnection | MySQLConnectionAbstract, user_id: int, channel_id: int):

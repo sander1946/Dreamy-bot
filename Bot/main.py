@@ -18,6 +18,7 @@ import json
 from functions import load_ids, save_transcript
 from ticketMenu import PersistentTicketView, PersistentCloseTicketView
 from musicMenu import PersistentMusicView
+from cogs.RunManager import RunManager
 
 # 3rd party imports
 
@@ -62,6 +63,9 @@ async def on_ready() -> None:
     client.add_view(PersistentTicketView(client))
     client.add_view(PersistentCloseTicketView(client))
     client.add_view(PersistentMusicView(client))
+    
+    # Load the cogs
+    await client.add_cog(RunManager(client))
     
     # Set Rich Presence (Streaming)
     if TESTING == "True":
