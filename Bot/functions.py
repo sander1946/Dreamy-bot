@@ -79,7 +79,7 @@ async def save_transcript(channel: discord.TextChannel, ticket_logs: str) -> Non
             async for message in channel.history(limit=None):
                 # Append the message with the author's name to the logs
                 ticket_logs = f"{message.author.name}: {message.content}\n" + ticket_logs
-            ticket_logs = f"Transcript for {channel.name}:\n" + "```\n" + ticket_logs + "```"
+            ticket_logs = f"Transcript for {channel.name}:\n" + "```\n" + ticket_logs + "[0M```"
             f.write(ticket_logs)
         return path
     except Exception as e:
