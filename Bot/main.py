@@ -183,7 +183,11 @@ async def createteam(interaction: discord.Interaction, member: discord.Member, e
         return
     
     if member.id in teams:
-        await interaction.followup.send("This user already leads a team.", ephemeral=True)
+        try:
+            message = await client.fetch_channel(teams[member.id]["channel_id"]).fetch_message(teams[member.id]["message_id"])
+            await interaction.followup.send("This user already leads a team.", ephemeral=True)
+        except discord.NotFound:
+            print(f"[teams] Team message not found for user {member.id}.")
         return
 
     if len(teams) >= max_teams:
@@ -237,13 +241,39 @@ async def closeteam(interaction: discord.Interaction, member: discord.Member) ->
         await interaction.followup.send(f"Team {team_data['emoji']} led by {member.mention} is not currently locked. Please lock the team first.", ephemeral=True)
         return
     team_data["closed"] = True  # Set the closed flag
-    channel = client.get_channel(team_data["channel_id"])  # Get the team's channel
-    message = await channel.fetch_message(team_data["message_id"])  # Fetch the message
-    await message.delete()  # Delete the message
+    try:
+        channel = client.get_channel(team_data["channel_id"])  # Get the team's channel
+        message = await channel.fetch_message(team_data["message_id"])  # Fetch the message
+        await message.delete()  # Delete the message
+    except discord.NotFound:
+        print(f"[teams] Team message not found for user {member.id}.")
+        await interaction.followup.send(f"Team {team_data['emoji']} led by {member.mention} message was not found.", ephemeral=True)
 
-    del teams[member.id]  # Remove the team from the dictionary
     await interaction.channel.send(f"Team {team_data['emoji']} led by {member.mention} has been closed.", allowed_mentions=discord.AllowedMentions.none())
     await interaction.followup.send(f"Team {team_data['emoji']} led by {member.mention} has been closed.", ephemeral=False)
+    del teams[member.id]  # Remove the team from the dictionary
+
+
+@client.tree.command(name="force_close_team", description="Close the given leader's team.")
+async def force_close_team(interaction: discord.Interaction, member: discord.Member) -> None:
+    await interaction.response.defer(ephemeral=True)  # Defer the response to get more time
+    allowed_roles: list[int] = [ids[interaction.guild.id]["sancturary_keeper_role_id"], ids[interaction.guild.id]["event_luminary_role_id"], ids[interaction.guild.id]["sky_guardians_role_id"], ids[interaction.guild.id]["tech_oracle_role_id"]]
+    if not any(role.id in allowed_roles for role in interaction.user.roles):
+        await interaction.followup.send("You do not have permission to force close a team.", ephemeral=True)
+        return
+    
+    if member.id not in teams:
+        await interaction.followup.send(f"A team led by {member.mention} not found.", ephemeral=True)
+        return
+    
+    team_data = teams[member.id]
+    
+    # Check if the team is locked
+    team_data["closed"] = True  # Set the closed flag
+
+    await interaction.channel.send(f"Team {team_data['emoji']} led by {member.mention} has been closed.", allowed_mentions=discord.AllowedMentions.none())
+    await interaction.followup.send(f"Team {team_data['emoji']} led by {member.mention} has been force closed.", ephemeral=False)
+    del teams[member.id]  # Remove the team from the dictionary
 
 
 @client.tree.command(name="lockteam", description="Lock the given leader's team.")
@@ -259,14 +289,20 @@ async def lockteam(interaction: discord.Interaction, member: discord.Member) -> 
         return
         
     team_data = teams[member.id]
-    message_id = team_data["message_id"]
     
     if team_data["locked"] == True: 
         await interaction.followup.send(f"Team {team_data['emoji']} is already locked.", ephemeral=True)
         return
     
     # Retrieve the team message
-    message = await interaction.channel.fetch_message(message_id)
+    try:
+        channel = client.get_channel(team_data["channel_id"])  # Get the team's channel
+        message = await channel.fetch_message(team_data["message_id"])  # Fetch the message
+        await message.delete()  # Delete the message
+    except discord.NotFound:
+        print(f"[teams] Team message not found for user {member.id}.")
+        await interaction.followup.send(f"Team {team_data['emoji']} led by {member.mention} message was not found.\nUse `/force_close_team` to close the team", ephemeral=True)
+        return
     
     # Update the message to indicate the team is locked
     updated_message = message.content + "\n-# __ This team has been locked ^^ __"
@@ -291,7 +327,6 @@ async def unlockteam(interaction: discord.Interaction, member: discord.Member) -
         return
     
     team_data = teams[member.id]
-    message_id = team_data["message_id"]
 
     if team_data["locked"] == False:
         await interaction.followup.send("Team is not locked.", ephemeral=True)
@@ -301,11 +336,16 @@ async def unlockteam(interaction: discord.Interaction, member: discord.Member) -
     teams[member.id]["resetting"] = True
 
     # Retrieve the team message
-    message = await interaction.channel.fetch_message(message_id)
-
-    # Update the message to indicate the reset procedure
-    reset_message = f"__**Group Leader**__\n{client.get_user(team_data['leader_id']).mention} :{team_data['emoji']}:\n\n__**Members**__\n<> The bot is currently resetting the player list. Please wait. <>"
-    await message.edit(content=reset_message)
+    try:
+        channel = client.get_channel(team_data["channel_id"])  # Get the team's channel
+        message = await channel.fetch_message(team_data["message_id"])  # Fetch the message
+        # Update the message to indicate the reset procedure
+        reset_message = f"__**Group Leader**__\n{client.get_user(team_data['leader_id']).mention} :{team_data['emoji']}:\n\n__**Members**__\n<> The bot is currently resetting the player list. Please wait. <>"
+        await message.edit(content=reset_message)
+    except discord.NotFound:
+        print(f"[teams] Team message not found for user {member.id}.")
+        await interaction.followup.send(f"Team {team_data['emoji']} led by {member.mention} message was not found.\nUse `/force_close_team` to close the team", ephemeral=True)
+        return
     
     wait_message = await interaction.channel.send("Please wait for the team to unlock...")
     await interaction.followup.send(f"Team {team_data['emoji']} will be unlocked", ephemeral=True)

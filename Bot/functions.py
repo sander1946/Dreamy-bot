@@ -67,9 +67,9 @@ async def send_message_to_user(client: commands.Bot, user_id: int, message: str)
 
 
 # Function to save the transcript of a ticket
-async def save_transcript(channel: discord.TextChannel, ticket_logs: str) -> None:
-    dir = os.path.dirname(__file__)
-    path = f"{dir}/tickets/ticket-{channel.name}.txt"
+async def save_transcript(channel: discord.TextChannel, ticket_logs: str) -> str:
+    _dir = os.path.dirname(__file__)
+    path = f"{_dir}/tickets/ticket-{channel.name}.txt"
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
     try:
@@ -111,7 +111,6 @@ def insert_query(connection: PooledMySQLConnection | MySQLConnectionAbstract, qu
     try:
         cursor.execute(query, values)
         connection.commit()
-        print("Query executed successfully")
     except Error as e:
         print(f"The error '{e}' occurred")
 
@@ -133,7 +132,6 @@ def update_query(connection: PooledMySQLConnection | MySQLConnectionAbstract, qu
     try:
         cursor.execute(query, values)
         connection.commit()
-        print("Query executed successfully")
     except Error as e:
         print(f"The error '{e}' occurred")
 
@@ -144,7 +142,6 @@ def delete_query(connection: PooledMySQLConnection | MySQLConnectionAbstract, qu
     try:
         cursor.execute(query, values)
         connection.commit()
-        print("Query executed successfully")
     except Error as e:
         print(f"The error '{e}' occurred")
 
@@ -195,13 +192,13 @@ def get_video_urls_from_playlist(playlist_url):
 
 
 # Main function
-def get_video_urls(url: str) -> list:
+def get_video_urls(url: str) -> list|str:
     playlist_pattern = r'(?:https?://)?(?:www\.)?youtube\.com/playlist\?list=[\w-]+'
     radio_pattern = r"^https?:\/\/(www\.)?youtube\.com\/.*[?&]list=(RD|RDEM)[^&]+.*"
     video_pattern = r'(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)[\w-]+'
 
     if re.match(playlist_pattern, url):
-        video_urls, playlist_title = get_video_urls_from_playlist(url)
+        video_urls, _ = get_video_urls_from_playlist(url)
         if not video_urls:
             print("[error] No videos found or failed to fetch URLs.")
             return []
