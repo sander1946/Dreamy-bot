@@ -23,7 +23,8 @@ class PersistentTicketView(discord.ui.View):
             discord.SelectOption(label="Inappropriate Behavior", value="01", emoji="🚫", description="Report someone who is behaving inappropriately"),
             discord.SelectOption(label="Discord Server Issue", value="02", emoji="🛠️", description="Report a discord server issue or bug"),
             discord.SelectOption(label="Bot Issue", value="03", emoji="🤖", description="Report an issue with the Dreamy Assistant bot"),
-            discord.SelectOption(label="Other Issue or Subject", value="04", emoji="❓", description="For any and all other issues or questions")
+            discord.SelectOption(label="Removal of a Post", value="04", emoji="🗑", description="Have an old Dreamy Journal that you want to delete?"),
+            discord.SelectOption(label="Other Issue or Subject", value="05", emoji="❓", description="For any and all other issues or questions")
         ])
         select.callback = self.select_callback
         view = View(timeout=60)
@@ -133,8 +134,8 @@ class PersistentTicketView(discord.ui.View):
             await ticket_channel.send(f"\n{tech_oracle_role.mention}, {interaction.user.mention} wants to report a issue with the bot.\nPlease wait until an Tech Oracle is on the case <3\nIn the meantime, please provide as much detail as possible about the issue with the bot")
 
             await owner.send(f"A bot issue ticket has been created by {interaction.user.mention}: {ticket_url}")
-            
-        elif interaction.data["values"][0] == "04": # Other Issue or Subject
+        
+        elif interaction.data["values"][0] == "04": # Removal of a Post
             overwrites = {
                 interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False),
                 interaction.guild.me: discord.PermissionOverwrite(read_messages=True),
@@ -145,7 +146,32 @@ class PersistentTicketView(discord.ui.View):
             ticket_name = f"Other Issue - {interaction.user.display_name}'s - {str(time.time_ns())[-6:]}"
             ticket_channel = await interaction.guild.create_text_channel(name=ticket_name, category=support_category, overwrites=overwrites)
             
-            print(f"[tickets][inappropriate] Ticket created for user {interaction.user.name} in channel {ticket_channel.name}")
+            print(f"[tickets][removal] Ticket created for user {interaction.user.name} in channel {ticket_channel.name}")
+            
+            await interaction.followup.send("A ticket for a post removal has been created!", ephemeral=True)
+            
+            ticket_url = f"https://discord.com/channels/{interaction.guild.id}/{ticket_channel.id}"
+            await send_message_to_user(self.client, interaction.user.id, f"Your ticket has been created: {ticket_url}")
+            
+            await ticket_channel.send("# Post Removal\nAfter you are done, you can close this ticket via the button below!", view=PersistentCloseTicketView(self.client))
+            
+            # Notify user and ping Sky Guardians role
+            await ticket_channel.send(f"\n{sky_guardians_role.mention}, {interaction.user.mention} has an post removal request.\nPlease wait until a Sky Guardian is on the case <3\nIn the meantime, please provide the context of the issue or question")
+            
+            await owner.send(f"A post removal request has been created by {interaction.user.mention}: {ticket_url}")
+        
+        elif interaction.data["values"][0] == "05": # Other Issue or Subject
+            overwrites = {
+                interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                interaction.guild.me: discord.PermissionOverwrite(read_messages=True),
+                interaction.user: discord.PermissionOverwrite(read_messages=True),
+                sky_guardians_role: discord.PermissionOverwrite(read_messages=True),
+                tech_oracle_role: discord.PermissionOverwrite(read_messages=True, manage_messages=True, manage_channels=True)
+            }
+            ticket_name = f"Other Issue - {interaction.user.display_name}'s - {str(time.time_ns())[-6:]}"
+            ticket_channel = await interaction.guild.create_text_channel(name=ticket_name, category=support_category, overwrites=overwrites)
+            
+            print(f"[tickets][other] Ticket created for user {interaction.user.name} in channel {ticket_channel.name}")
             
             await interaction.followup.send("A ticket for general or other issues has been created!", ephemeral=True)
             
@@ -162,7 +188,7 @@ class PersistentTicketView(discord.ui.View):
         else: # Invalid selection
             await interaction.followup.send("Invalid selection", ephemeral=True)
             return # Exit the function
-        connection = create_connection("Tickets")
+        connection = create_connection("Server_data")
         save_ticket_to_db(connection, interaction.user.id, ticket_channel.id)
         close_connection(connection)
 
@@ -201,7 +227,7 @@ class PersistentCloseTicketView(discord.ui.View):
         if interaction.data["values"][0] == "01": # Yes, close this ticket
             if interaction.user.id != ids[interaction.guild.id]["owner_id"] or sky_guardians_role in interaction.user.roles or tech_oracle_role in interaction.user.roles:
                 await interaction.followup.send("Ticket will be closed.", ephemeral=True)
-                connection = create_connection("Tickets")
+                connection = create_connection("Server_data")
                 user_id = load_ticket_from_db(connection, interaction.channel.id)
                 user_id = user_id["user_id"]
                 if not user_id:
@@ -224,7 +250,7 @@ class PersistentCloseTicketView(discord.ui.View):
                 print(f"[tickets] Ticket closed by user {interaction.user.name} in channel {interaction.channel.name}")
                 
                 await interaction.channel.delete()
-                connection = create_connection("Tickets")
+                connection = create_connection("Server_data")
                 delete_ticket_from_db(connection, interaction.channel.id)
                 close_connection(connection)
                 await send_message_to_user(self.client, user_id, "Your ticket has been closed successfully. The Transcript of the ticket has been saved.")
