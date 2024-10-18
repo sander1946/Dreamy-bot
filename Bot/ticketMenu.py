@@ -21,10 +21,10 @@ class PersistentTicketView(discord.ui.View):
     async def ticket_callback(self, interaction: discord.Interaction) -> None:
         select = Select(options=[
             discord.SelectOption(label="Inappropriate Behavior", value="01", emoji="🚫", description="Report someone who is behaving inappropriately"),
-            discord.SelectOption(label="Discord Server Issue", value="02", emoji="🛠️", description="Report a discord server issue or bug"),
-            discord.SelectOption(label="Bot Issue", value="03", emoji="🤖", description="Report an issue with the Dreamy Assistant bot"),
+            discord.SelectOption(label="Discord Server Issue", value="02", emoji="🛠️", description="Report a bug or issue with the discord server"),
             discord.SelectOption(label="Removal of a Post", value="04", emoji="🗑", description="Have an old Dreamy Journal that you want to delete?"),
-            discord.SelectOption(label="Other Issue or Subject", value="05", emoji="❓", description="For any and all other issues or questions")
+            discord.SelectOption(label="Bot Issue", value="03", emoji="🤖", description="Report an bug or issue with the Dreamy Assistant bot"),
+            discord.SelectOption(label="Other Subject", value="05", emoji="❓", description="Have any other subjects you want to talk about?")
         ])
         select.callback = self.select_callback
         view = View(timeout=60)
@@ -67,7 +67,7 @@ class PersistentTicketView(discord.ui.View):
                 tech_oracle_role: discord.PermissionOverwrite(read_messages=True, manage_messages=True, manage_channels=True)
             }
             
-            ticket_name = f"User Report - {interaction.user.display_name}'s - {str(time.time_ns())[-6:]}"
+            ticket_name = f"User-Report-{interaction.user.display_name}-{str(time.time_ns())[-6:]}"
             ticket_channel = await interaction.guild.create_text_channel(name=ticket_name, category=support_category, overwrites=overwrites)
             
             print(f"[tickets][inappropriate] Ticket created for user {interaction.user.name} in channel {ticket_channel.name}")
@@ -93,10 +93,10 @@ class PersistentTicketView(discord.ui.View):
                 tech_oracle_role: discord.PermissionOverwrite(read_messages=True, manage_messages=True, manage_channels=True)
             }
             
-            ticket_name = f"Server Issue - {interaction.user.display_name}'s - {str(time.time_ns())[-6:]}"
+            ticket_name = f"Server-Issue-{interaction.user.display_name}-{str(time.time_ns())[-6:]}"
             ticket_channel = await interaction.guild.create_text_channel(name=ticket_name, category=support_category, overwrites=overwrites)
             
-            print(f"[tickets][inappropriate] Ticket created for user {interaction.user.name} in channel {ticket_channel.name}")
+            print(f"[tickets][Server] Ticket created for user {interaction.user.name} in channel {ticket_channel.name}")
             
             await interaction.followup.send("A ticket for a server issue has been created!", ephemeral=True)
             
@@ -108,7 +108,7 @@ class PersistentTicketView(discord.ui.View):
             # Notify user and ping Sky Guardians role
             await ticket_channel.send(f"\n{sky_guardians_role.mention}, {interaction.user.mention} wants to report a server issue.\nPlease wait until a Sky Guardian is on the case <3\nIn the meantime, please provide as much detail as possible about the issue")
 
-            await owner.send(f"A user report ticket has been created by {interaction.user.mention}: {ticket_url}")
+            await owner.send(f"A server issue ticket has been created by {interaction.user.mention}: {ticket_url}")
             
         elif interaction.data["values"][0] == "03": # Bot Issues, no need for Sky Guardians
             overwrites = {
@@ -118,10 +118,10 @@ class PersistentTicketView(discord.ui.View):
                 sky_guardians_role: discord.PermissionOverwrite(read_messages=False),
                 tech_oracle_role: discord.PermissionOverwrite(read_messages=True, manage_messages=True, manage_channels=True)
             }
-            ticket_name = f"Bot Issue - {interaction.user.display_name}'s - {str(time.time_ns())[-6:]}"
+            ticket_name = f"Bot-Issue-{interaction.user.display_name}-{str(time.time_ns())[-6:]}"
             ticket_channel = await interaction.guild.create_text_channel(name=ticket_name, category=support_category, overwrites=overwrites)
             
-            print(f"[tickets][inappropriate] Ticket created for user {interaction.user.name} in channel {ticket_channel.name}")
+            print(f"[tickets][bot] Ticket created for user {interaction.user.name} in channel {ticket_channel.name}")
             
             await interaction.followup.send("A ticket for a issue with the bot has been created!", ephemeral=True)
             
@@ -143,7 +143,7 @@ class PersistentTicketView(discord.ui.View):
                 sky_guardians_role: discord.PermissionOverwrite(read_messages=True),
                 tech_oracle_role: discord.PermissionOverwrite(read_messages=True, manage_messages=True, manage_channels=True)
             }
-            ticket_name = f"Other Issue - {interaction.user.display_name}'s - {str(time.time_ns())[-6:]}"
+            ticket_name = f"Removal-request-{interaction.user.display_name}-{str(time.time_ns())[-6:]}"
             ticket_channel = await interaction.guild.create_text_channel(name=ticket_name, category=support_category, overwrites=overwrites)
             
             print(f"[tickets][removal] Ticket created for user {interaction.user.name} in channel {ticket_channel.name}")
@@ -168,7 +168,7 @@ class PersistentTicketView(discord.ui.View):
                 sky_guardians_role: discord.PermissionOverwrite(read_messages=True),
                 tech_oracle_role: discord.PermissionOverwrite(read_messages=True, manage_messages=True, manage_channels=True)
             }
-            ticket_name = f"Other Issue - {interaction.user.display_name}'s - {str(time.time_ns())[-6:]}"
+            ticket_name = f"Other-Issue-{interaction.user.display_name}'s-{str(time.time_ns())[-6:]}"
             ticket_channel = await interaction.guild.create_text_channel(name=ticket_name, category=support_category, overwrites=overwrites)
             
             print(f"[tickets][other] Ticket created for user {interaction.user.name} in channel {ticket_channel.name}")
