@@ -298,7 +298,6 @@ async def lockteam(interaction: discord.Interaction, member: discord.Member) -> 
     try:
         channel = client.get_channel(team_data["channel_id"])  # Get the team's channel
         message = await channel.fetch_message(team_data["message_id"])  # Fetch the message
-        await message.delete()  # Delete the message
     except discord.NotFound:
         print(f"[teams] Team message not found for user {member.id}.")
         await interaction.followup.send(f"Team {team_data['emoji']} led by {member.mention} message was not found.\nUse `/force_close_team` to close the team", ephemeral=True)
