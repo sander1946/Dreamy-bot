@@ -173,6 +173,37 @@ def delete_ticket_from_db(connection: PooledMySQLConnection | MySQLConnectionAbs
     delete_query(connection, query, (channel_id,))
 
 
+def get_rule_channels(connection: PooledMySQLConnection | MySQLConnectionAbstract):
+    query = "SELECT * FROM rule_channels"
+    result = select_query(connection, query)
+    if result:
+        return result
+    return None
+
+def create_rule_channel(connection: PooledMySQLConnection | MySQLConnectionAbstract, channel_id: int,  creator_id: int):
+    query = "INSERT INTO rule_channels (channel_id, creator_id) VALUES (%s, %s)"
+    values = (channel_id, creator_id)
+    insert_query(connection, query, values)
+
+def remove_rule_channel(connection: PooledMySQLConnection | MySQLConnectionAbstract, channel_id: int):
+    query = "DELETE FROM rule_channels WHERE channel_id = %s"
+    delete_query(connection, query, (channel_id,))
+    query = "DELETE FROM rules_accepted WHERE channel_id = %s"
+    delete_query(connection, query, (channel_id,))
+
+def set_accepted_rules(connection: PooledMySQLConnection | MySQLConnectionAbstract, channel_id: int, user_id: int):
+    query = "INSERT INTO rules_accepted (channel_id, user_id) VALUES (%s, %s)"
+    values = (channel_id, user_id)
+    insert_query(connection, query, values)
+
+def get_accepted_rules(connection: PooledMySQLConnection | MySQLConnectionAbstract, channel_id: int):
+    query = "SELECT * FROM rules_accepted WHERE channel_id = %s"
+    result = select_query(connection, query, (channel_id,))
+    if result:
+        return result
+    return None
+
+
 # Function to get the video URLs from a playlist
 def get_video_urls_from_playlist(playlist_url):
     ydl_opts: dict[str, bool] = {

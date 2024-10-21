@@ -15,10 +15,11 @@ import json
 
 
 # local imports
-from functions import load_ids, save_transcript
+from functions import load_ids, save_transcript, get_rule_channels, create_connection, close_connection
 from ticketMenu import PersistentTicketView, PersistentCloseTicketView
 from musicMenu import PersistentMusicView
 from cogs.RunManager import RunManager
+from cogs.AccessManager import AccessManager, PersistentAcceptRulesView
 
 # 3rd party imports
 
@@ -64,8 +65,17 @@ async def on_ready() -> None:
     client.add_view(PersistentCloseTicketView(client))
     client.add_view(PersistentMusicView(client))
     
+    connection = create_connection("Server_data")
+    rule_channels = get_rule_channels(connection)
+    if rule_channels:
+        for rule_channel in rule_channels:
+            channel = await client.fetch_channel(rule_channel["channel_id"])
+            client.add_view(PersistentAcceptRulesView(client, channel))
+    close_connection(connection)
+    
     # Load the cogs
     await client.add_cog(RunManager(client))
+    await client.add_cog(AccessManager(client))
     
     # Set Rich Presence (Streaming)
     if TESTING == "True":

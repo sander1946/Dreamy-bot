@@ -16,8 +16,6 @@ class RunManager(commands.Cog):
     def is_runner() -> bool:
         async def predicate(interaction: discord.Interaction) -> bool:
             allowed_roles: list[int] = [ids[interaction.guild.id]["sancturary_keeper_role_id"], ids[interaction.guild.id]["sky_guardians_role_id"], ids[interaction.guild.id]["tech_oracle_role_id"]]
-            print(f"id: {interaction.user.id}")
-            print(f"roles: {interaction.user.roles}")
             if interaction.user.id in [152948524458180609, 496387339388452864, 787737643630329896] or any(role.id in allowed_roles for role in interaction.user.roles): # Allow tech oracles and up to use the command and Odd and Eli
                 return True
             await interaction.response.send_message("You do not have the required role to use this command.", ephemeral=True)
