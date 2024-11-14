@@ -55,6 +55,7 @@ class BaseModal(discord.ui.Modal):
         tb = "".join(traceback.format_exception(type(error), error, error.__traceback__))
         message = f"An error occurred while processing the URL, Please check the URL and try again."
         print(f"[error][modal] Unable to process the interaction")
+        print(error)
         try:
             await interaction.response.send_message(message, ephemeral=True)
         except discord.InteractionResponded:
@@ -70,25 +71,25 @@ class BaseModal(discord.ui.Modal):
 class PersistentMusicView(discord.ui.View):
     def __init__(self, client: commands.Bot):
         super().__init__(timeout=None)  
-        self.add_item(discord.ui.Button(emoji="<:Back:1284803501486243960>", style=discord.ButtonStyle.primary, custom_id="back", row=1))
+        self.add_item(discord.ui.Button(emoji="<:Back:1306675066456772608>", style=discord.ButtonStyle.primary, custom_id="back", row=1))
         self.children[-1].callback = self.back_callback
-        self.add_item(discord.ui.Button(emoji="<:Play:1284205906820595865>", style=discord.ButtonStyle.primary, custom_id="resume", row=1))
+        self.add_item(discord.ui.Button(emoji="<:Play:1306675076183359599>", style=discord.ButtonStyle.primary, custom_id="resume", row=1))
         self.children[-1].callback = self.pause_resume_callback
-        self.add_item(discord.ui.Button(emoji="<:Skip:1284205910365044847>", style=discord.ButtonStyle.success, custom_id="skip", row=1))
+        self.add_item(discord.ui.Button(emoji="<:Skip:1306675079811301397>", style=discord.ButtonStyle.success, custom_id="skip", row=1))
         self.children[-1].callback = self.skip_callback
-        self.add_item(discord.ui.Button(emoji="<:Queue:1284205908473417789>", style=discord.ButtonStyle.secondary, custom_id="queue", row=2))
+        self.add_item(discord.ui.Button(emoji="<:Queue:1306675077798039705>", style=discord.ButtonStyle.secondary, custom_id="queue", row=2))
         self.children[-1].callback = self.queue_callback
-        self.add_item(discord.ui.Button(emoji="<:Clear_Queue:1284205901791887524>", style=discord.ButtonStyle.secondary, custom_id="clear_queue", row=2))
+        self.add_item(discord.ui.Button(emoji="<:Clear_Queue:1306675068931149915>", style=discord.ButtonStyle.secondary, custom_id="clear_queue", row=2))
         self.children[-1].callback = self.clear_queue_callback
-        self.add_item(discord.ui.Button(emoji="<:Close:1284205903343648870>", style=discord.ButtonStyle.danger, custom_id="stop", row=2))
+        self.add_item(discord.ui.Button(emoji="<:Close:1306675070848204820>", style=discord.ButtonStyle.danger, custom_id="stop", row=2))
         self.children[-1].callback = self.stop_callback
-        self.add_item(discord.ui.Button(emoji="<:Close:1284205903343648870>", style=discord.ButtonStyle.secondary, disabled=True, custom_id="loop", row=3))
+        self.add_item(discord.ui.Button(emoji="<:Close:1306675070848204820>", style=discord.ButtonStyle.secondary, disabled=True, custom_id="loop", row=3))
         self.children[-1].callback = self.loop_callback
-        self.add_item(discord.ui.Button(emoji="<:Close:1284205903343648870>", style=discord.ButtonStyle.secondary, disabled=True, custom_id="shuffle", row=3))
+        self.add_item(discord.ui.Button(emoji="<:Close:1306675070848204820>", style=discord.ButtonStyle.secondary, disabled=True, custom_id="shuffle", row=3))
         self.children[-1].callback = self.shuffle_callback
-        self.add_item(discord.ui.Button(emoji="<:Close:1284205903343648870>", style=discord.ButtonStyle.secondary, disabled=True, custom_id="volume_up", row=3))
+        self.add_item(discord.ui.Button(emoji="<:Close:1306675070848204820>", style=discord.ButtonStyle.secondary, disabled=True, custom_id="volume_up", row=3))
         self.children[-1].callback = self.volume_up_callback
-        self.add_item(discord.ui.Button(emoji="<:Close:1284205903343648870>", style=discord.ButtonStyle.secondary, disabled=True, custom_id="volume_down", row=3))
+        self.add_item(discord.ui.Button(emoji="<:Close:1306675070848204820>", style=discord.ButtonStyle.secondary, disabled=True, custom_id="volume_down", row=3))
         self.children[-1].callback = self.volume_down_callback
         self.client = client
     

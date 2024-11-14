@@ -412,12 +412,12 @@ async def music_menu(interaction: discord.Interaction) -> None:
         color=discord.Color.blue()
     )
     
-    embed.add_field(name="<:Pause:1284205904933158952> Pause", value="Pause the current song.", inline=False)
-    embed.add_field(name="<:Play:1284205906820595865> Resume", value="Resume the paused track.", inline=False)
-    embed.add_field(name="<:Skip:1284205910365044847> Skip", value="Skip to the next song in the queue.", inline=False)
-    embed.add_field(name="<:Queue:1284205908473417789> Queue", value="Add a new song or playlist to the queue via a YouTube URL.", inline=False)
-    embed.add_field(name="<:Clear_Queue:1284205901791887524> Clear Queue", value="Remove all songs from the queue.", inline=False)
-    embed.add_field(name="<:Close:1284205903343648870> Stop", value="Stop the music, clear the queue, and disconnect the bot from the music channel", inline=False)
+    embed.add_field(name="<:Pause:1306675074236940309> Pause", value="Pause the current song.", inline=False)
+    embed.add_field(name="<:Play:1306675076183359599> Resume", value="Resume the paused track.", inline=False)
+    embed.add_field(name="<:Skip:1306675079811301397> Skip", value="Skip to the next song in the queue.", inline=False)
+    embed.add_field(name="<:Queue:1306675077798039705> Queue", value="Add a new song or playlist to the queue via a YouTube URL.", inline=False)
+    embed.add_field(name="<:Clear_Queue:1306675068931149915> Clear Queue", value="Remove all songs from the queue.", inline=False)
+    embed.add_field(name="<:Close:1306675070848204820> Stop", value="Stop the music, clear the queue, and disconnect the bot from the music channel", inline=False)
 
     embed.set_footer(text="Enjoy your tunes! 🎶")
     
