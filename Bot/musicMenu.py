@@ -126,7 +126,7 @@ class PersistentMusicView(discord.ui.View):
         
         except Exception as e:
             print(f"[error][player] Error skipping the song: {e}")
-            await interaction.response.send_message(f"```ansi\n[2;31m\nI'm unable to skip the song at the moment[0M```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
+            await interaction.response.send_message(f"```ansi\n[2;31mI'm unable to skip the song at the moment```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
 
     async def pause_resume_callback(self, interaction: discord.Interaction) -> None:
         print(f"[pause_resume_callback] {interaction.user.display_name} pressed the pause/resume button")
@@ -143,7 +143,7 @@ class PersistentMusicView(discord.ui.View):
                 await interaction.response.send_message(f"{interaction.user.mention} Im not currently playing anything!", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
         except Exception as e:
             print(f"[error][player] Error resuming the song: {e}")
-            await interaction.response.send_message(f"```ansi\n[2;31m\nI'm unable to pause or resume the song at the moment[0M```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
+            await interaction.response.send_message(f"```ansi\n[2;31mI'm unable to pause or resume the song at the moment```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
 
     async def skip_callback(self, interaction: discord.Interaction) -> None:
         print(f"[skip_callback] {interaction.user.display_name} pressed the skip button")
@@ -158,10 +158,14 @@ class PersistentMusicView(discord.ui.View):
 
                 await interaction.response.send_message(f"{interaction.user.mention} Skipped the song.", delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
             else:
-                await interaction.response.send_message(f"{interaction.user.mention} No song is currently playing.", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
+                if queues[guild_id]["queue"] and not voice_client.is_playing():
+                    await self.play_next(interaction)
+                    await interaction.response.send_message(f"{interaction.user.mention} Skipped the song.", delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
+                else:
+                    await interaction.response.send_message(f"{interaction.user.mention} No song is currently playing, or other items in the queue", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
         except ValueError as e:
             print(f"[error][player] Error skipping the song: {e}")
-            await interaction.response.send_message(f"```ansi\n[2;31m\nI'm unable to skip the song at the moment[0M```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
+            await interaction.response.send_message(f"```ansi\n[2;31mI'm unable to skip the song at the moment```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
     
     async def queue_callback(self, interaction: discord.Interaction) -> None:
         print(f"[queue_callback] {interaction.user.display_name} pressed the queue button")
@@ -181,16 +185,16 @@ class PersistentMusicView(discord.ui.View):
         music_channel = discord.utils.get(interaction.guild.voice_channels, id=ids[guild_id]["music_voice_id"])
 
         if music_channel is None:
-            await interaction.response.send_message("```ansi\n[2;31m\nThe specified voice channel does not exist. please update the channel ID.[0M```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
+            await interaction.response.send_message("```ansi\n[2;31mThe specified voice channel does not exist. please update the channel ID.```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
             return
         
         # Get video or playlist URLs
         video_urls = get_video_urls(url)
         if video_urls == []:
-            await interaction.response.send_message("```ansi\n[2;31m\nInvalid URL or no video(s) were found.[0M```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
+            await interaction.response.send_message("```ansi\n[2;31mInvalid URL or no video(s) were found.```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
             return
         if video_urls == "radio":
-            await interaction.response.send_message("```ansi\n[2;31m\nThis is a radio URL and cannot be processed.", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
+            await interaction.response.send_message("```ansi\n[2;31mThis is a radio URL and cannot be processed.", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
             return
         
         if self.client.voice_clients and guild_id in voice_clients:
@@ -202,7 +206,7 @@ class PersistentMusicView(discord.ui.View):
                 voice_clients[guild_id] = voice_client
             except TypeError as e:
                 print(f"[error][player] Error connecting to the voice channel: {e}")
-                await interaction.response.send_message("```ansi\n[2;31m\nAn error occurred while trying to connect to the voice channel.[0M```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
+                await interaction.response.send_message("```ansi\n[2;31mAn error occurred while trying to connect to the voice channel.```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
                 return
 
         # If there's no queue for this guild, create one
@@ -255,7 +259,7 @@ class PersistentMusicView(discord.ui.View):
                 await interaction.response.send_message(f"{interaction.user.mention} Stopped the song and disconnected.", delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
         except Exception as e:
             print(f"[error][player] Error stopping the song: {e}")
-            await interaction.response.send_message(f"```ansi\n[2;31m\nI'm unable to stop the song at the moment[0M```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
+            await interaction.response.send_message(f"```ansi\n[2;31mI'm unable to stop the song at the moment```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
     
     async def loop_callback(self, interaction: discord.Interaction) -> None:
         pass
@@ -298,15 +302,15 @@ class PersistentMusicView(discord.ui.View):
                     music_channel = discord.utils.get(interaction.guild.voice_channels, id=ids[guild_id]["music_voice_id"])
 
                     if music_channel is None:
-                        await interaction.response.send_message("```ansi\n[2;31m\nThe specified voice channel does not exist. please update the channel ID.[0M```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
+                        await interaction.response.send_message("```ansi\n[2;31mThe specified voice channel does not exist. please update the channel ID.```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
                         return
                     try:
                         # Connect to the specific voice channel
-                        voice_client = await music_channel.connect()
+                        voice_client: discord.VoiceClient = await music_channel.connect()
                         voice_clients[guild_id] = voice_client
                     except TypeError as e:
                         print(f"[error][player] Error connecting to the voice channel: {e}")
-                        await interaction.response.send_message("```ansi\n[2;31m\nAn error occurred while trying to connect to the voice channel.[0M```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
+                        await interaction.response.send_message("```ansi\n[2;31mAn error occurred while trying to connect to the voice channel.```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
                         return
                 try:
                     voice_clients[guild_id].play(player, after=lambda e: asyncio.run_coroutine_threadsafe(self.play_next(interaction), self.client.loop))
@@ -315,12 +319,12 @@ class PersistentMusicView(discord.ui.View):
                 await music_spam_channel.send(f"Now playing: **{data['title']}**", delete_after=20*60) # Delete after 20 minutes to keep channel a bit clean
             except yt_dlp.DownloadError as e:
                 print(f"[error][play_next] Error downloading the song: {e}")
-                await music_spam_channel.send(f"```ansi\n[2;31m\nAn error occurred while trying to download the song. Skipping to the next song.[0M```", delete_after=10)
-                voice_client.stop()
-                # await self.play_next(interaction)  # Automatically attempt to play the next song
-            except ValueError as e:
+                await music_spam_channel.send(f"```ansi\n[2;31mAn error occurred while trying to download the song. Skipping to the next song.```", delete_after=10)
+                # voice_client.stop()
+                await self.play_next(interaction)  # Automatically attempt to play the next song
+            except Exception as e:
                 print(f"[error][play_next] Error playing the song: {e}")
-                await music_spam_channel.send(f"```ansi\n[2;31m\nAn error occurred while trying to play the song. Skipping to the next song.[0M```", delete_after=10)
+                await music_spam_channel.send(f"```ansi\n[2;31mAn error occurred while trying to play the song. Skipping to the next song.```", delete_after=10)
 
                 # If an error occurs, skip to the next song
                 await self.play_next(interaction)  # Automatically attempt to play the next song
