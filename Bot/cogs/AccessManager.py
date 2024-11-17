@@ -32,19 +32,19 @@ class AccessManager(commands.Cog):
         event_luminary_role = interaction.guild.get_role(ids[interaction.guild.id]["event_luminary_role_id"])
         if not event_luminary_role:
             print("[error][tickets] Event Luminary role not found. Please provide a valid role ID.")
-            await interaction.followup.send("```ansi\n[2;31m\nEvent Luminary role not found. Please provide a valid role ID.[0M```", ephemeral=True)
+            await interaction.followup.send("```ansi\n[2;31mEvent Luminary role not found. Please provide a valid role ID.```", ephemeral=True)
             return
         
         sky_guardians_role = interaction.guild.get_role(ids[interaction.guild.id]["sky_guardians_role_id"])
         if not sky_guardians_role:
             print("[error][tickets] Sky Guardians role not found. Please provide a valid role ID.")
-            await interaction.followup.send("```ansi\n[2;31m\nSky Guardians role not found. Please provide a valid role ID.[0M```", ephemeral=True)
+            await interaction.followup.send("```ansi\n[2;31mSky Guardians role not found. Please provide a valid role ID.```", ephemeral=True)
             return
         
         tech_oracle_role = interaction.guild.get_role(ids[interaction.guild.id]["tech_oracle_role_id"])
         if not tech_oracle_role:
             print("[error][tickets] Tech Oracle role not found. Please provide a valid role ID.")
-            await interaction.followup.send("```ansi\n[2;31m\nTech Oracle role not found. Please provide a valid role ID.[0M```", ephemeral=True)
+            await interaction.followup.send("```ansi\n[2;31mTech Oracle role not found. Please provide a valid role ID.```", ephemeral=True)
             return
         
         current_channel = interaction.channel
@@ -77,19 +77,19 @@ class AccessManager(commands.Cog):
         event_luminary_role = interaction.guild.get_role(ids[interaction.guild.id]["event_luminary_role_id"])
         if not event_luminary_role:
             print("[error][tickets] Event Luminary role not found. Please provide a valid role ID.")
-            await interaction.followup.send("```ansi\n[2;31m\nEvent Luminary role not found. Please provide a valid role ID.[0M```", ephemeral=True)
+            await interaction.followup.send("```ansi\n[2;31mEvent Luminary role not found. Please provide a valid role ID.```", ephemeral=True)
             return
         
         sky_guardians_role = interaction.guild.get_role(ids[interaction.guild.id]["sky_guardians_role_id"])
         if not sky_guardians_role:
             print("[error][tickets] Sky Guardians role not found. Please provide a valid role ID.")
-            await interaction.followup.send("```ansi\n[2;31m\nSky Guardians role not found. Please provide a valid role ID.[0M```", ephemeral=True)
+            await interaction.followup.send("```ansi\n[2;31mSky Guardians role not found. Please provide a valid role ID.```", ephemeral=True)
             return
         
         tech_oracle_role = interaction.guild.get_role(ids[interaction.guild.id]["tech_oracle_role_id"])
         if not tech_oracle_role:
             print("[error][tickets] Tech Oracle role not found. Please provide a valid role ID.")
-            await interaction.followup.send("```ansi\n[2;31m\nTech Oracle role not found. Please provide a valid role ID.[0M```", ephemeral=True)
+            await interaction.followup.send("```ansi\n[2;31mTech Oracle role not found. Please provide a valid role ID.```", ephemeral=True)
             return
         
         connection = create_connection("Server_data")

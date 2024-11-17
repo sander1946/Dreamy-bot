@@ -37,25 +37,25 @@ class PersistentTicketView(discord.ui.View):
         support_category = discord.utils.get(interaction.guild.categories, id=ids[interaction.guild.id]["support_category_id"])
         if not support_category:
             print("[error][tickets] Support category not found. Please provide a valid category ID.")
-            await interaction.followup.send("```ansi\n[2;31m\nSupport category not found. Please provide a valid category ID.[0M```", ephemeral=True)
+            await interaction.followup.send("```ansi\n[2;31mSupport category not found. Please provide a valid category ID.```", ephemeral=True)
             return
         
         sky_guardians_role = interaction.guild.get_role(ids[interaction.guild.id]["sky_guardians_role_id"])
         if not sky_guardians_role:
             print("[error][tickets] Sky Guardians role not found. Please provide a valid role ID.")
-            await interaction.followup.send("```ansi\n[2;31m\nSky Guardians role not found. Please provide a valid role ID.[0M```", ephemeral=True)
+            await interaction.followup.send("```ansi\n[2;31mSky Guardians role not found. Please provide a valid role ID.```", ephemeral=True)
             return
         
         tech_oracle_role = interaction.guild.get_role(ids[interaction.guild.id]["tech_oracle_role_id"])
         if not tech_oracle_role:
             print("[error][tickets] Tech Oracle role not found. Please provide a valid role ID.")
-            await interaction.followup.send("```ansi\n[2;31m\nTech Oracle role not found. Please provide a valid role ID.[0M```", ephemeral=True)
+            await interaction.followup.send("```ansi\n[2;31mTech Oracle role not found. Please provide a valid role ID.```", ephemeral=True)
             return
 
         owner = await self.client.fetch_user(ids[interaction.guild.id]["owner_id"]) 
         if not owner:
             print("[error][tickets] owner user not found. Please provide a valid user ID.")
-            await interaction.followup.send("```ansi\n[2;31m\nowner was not found. Please provide a valid user ID.[0M```", ephemeral=True)
+            await interaction.followup.send("```ansi\n[2;31mowner was not found. Please provide a valid user ID.```", ephemeral=True)
             return
         
         if interaction.data["values"][0] == "01": # Inappropriate Behavior
@@ -215,13 +215,13 @@ class PersistentCloseTicketView(discord.ui.View):
         sky_guardians_role = interaction.guild.get_role(ids[interaction.guild.id]["sky_guardians_role_id"])
         if not sky_guardians_role:
             print("[error][tickets] Sky Guardians role not found. Please provide a valid role ID.")
-            await interaction.followup.send("```ansi\n[2;31m\nSky Guardians role not found. Please provide a valid role ID.[0M```", ephemeral=True)
+            await interaction.followup.send("```ansi\n[2;31mSky Guardians role not found. Please provide a valid role ID.```", ephemeral=True)
             return
         
         tech_oracle_role = interaction.guild.get_role(ids[interaction.guild.id]["tech_oracle_role_id"])
         if not tech_oracle_role:
             print("[error][tickets] Tech Oracle role not found. Please provide a valid role ID.")
-            await interaction.followup.send("```ansi\n[2;31m\nTech Oracle role not found. Please provide a valid role ID.[0M```", ephemeral=True)
+            await interaction.followup.send("```ansi\n[2;31mTech Oracle role not found. Please provide a valid role ID.```", ephemeral=True)
             return
         
         if interaction.data["values"][0] == "01": # Yes, close this ticket
@@ -236,7 +236,7 @@ class PersistentCloseTicketView(discord.ui.View):
                 user = await self.client.fetch_user(user_id)
                 if not user:
                     print("[error][tickets] The user that created this ticket is not found!")
-                    await interaction.followup.send("```ansi\n[2;31m\nThe user that created this ticket is not found![0M```", ephemeral=True)
+                    await interaction.followup.send("```ansi\n[2;31mThe user that created this ticket is not found!```", ephemeral=True)
                     user = interaction.user
                 
                 ticket_logs = ""

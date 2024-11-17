@@ -97,7 +97,7 @@ async def help_command(interaction: discord.Interaction):
     embed.set_image(url="https://i.postimg.cc/28LPZLBW/20240821214134-1.jpg")
     # Loop through all commands in the CommandTree and add them to the embed
     for command in client.tree.get_commands():
-        embed.add_field(name=f"/{command.name}", value=f"```ansi\n[2;31m\n```{command.description}[0M```", inline=False)
+        embed.add_field(name=f"/{command.name}", value=f"```ansi\n[2;31m```{command.description}```", inline=False)
         
     # Send the embed to the user
     await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -114,7 +114,7 @@ async def ticket(interaction: discord.Interaction) -> None:
     await interaction.response.defer()
     allowed_roles: list[int] = [ids[interaction.guild.id]["sancturary_keeper_role_id"], ids[interaction.guild.id]["sky_guardians_role_id"], ids[interaction.guild.id]["tech_oracle_role_id"]]
     if not any(role.id in allowed_roles for role in interaction.user.roles):
-        await interaction.followup.send("```ansi\n[2;31m\nYou do not have permission to create a ticket menu.[0M```", ephemeral=True)
+        await interaction.followup.send("```ansi\n[2;31mYou do not have permission to create a ticket menu.```", ephemeral=True)
         return
     await interaction.followup.send(
         "How to Submit Tickets:\n\n1. Click the button below to create a ticket.\n2. Choose the type of ticket you would like to create.\n3. A ticket channel will be created for you.\n4. Give as much detail as possible about the issue or question.\n5. Wait for response.\n6. Close ticket when response has been received.\n\n**Tickets remain saved on our side, so when you close a ticket we are still able to review the ticket and delete it afterwards.**", 
@@ -126,13 +126,13 @@ async def force_close_ticket(interaction: discord.Interaction) -> None:
     sky_guardians_role = interaction.guild.get_role(ids[interaction.guild.id]["sky_guardians_role_id"])
     if not sky_guardians_role:
         print("[error][tickets] Sky Guardians role not found. Please provide a valid role ID.")
-        await interaction.followup.send("```ansi\n[2;31m\nSky Guardians role not found. Please provide a valid role ID.[0M```", ephemeral=True)
+        await interaction.followup.send("```ansi\n[2;31mSky Guardians role not found. Please provide a valid role ID.```", ephemeral=True)
         return
     
     tech_oracle_role = interaction.guild.get_role(ids[interaction.guild.id]["tech_oracle_role_id"])
     if not tech_oracle_role:
         print("[error][tickets] Tech Oracle role not found. Please provide a valid role ID.")
-        await interaction.followup.send("```ansi\n[2;31m\nTech Oracle role not found. Please provide a valid role ID.[0M```", ephemeral=True)
+        await interaction.followup.send("```ansi\n[2;31mTech Oracle role not found. Please provide a valid role ID.```", ephemeral=True)
         return
     
     if interaction.user.id != ids[interaction.guild.id]["owner_id"] or sky_guardians_role in interaction.user.roles or tech_oracle_role in interaction.user.roles:
@@ -403,7 +403,7 @@ async def music_menu(interaction: discord.Interaction) -> None:
     await interaction.response.defer()
     allowed_roles: list[int] = [ids[interaction.guild.id]["sancturary_keeper_role_id"], ids[interaction.guild.id]["sky_guardians_role_id"], ids[interaction.guild.id]["tech_oracle_role_id"], ids[interaction.guild.id]["event_luminary_role_id"]]
     if not any(role.id in allowed_roles for role in interaction.user.roles):
-        await interaction.followup.send("```ansi\n[2;31m\nYou do not have permission to create a music menu.[0M```")
+        await interaction.followup.send("```ansi\n[2;31mYou do not have permission to create a music menu.```")
         return
     
     embed = discord.Embed(
