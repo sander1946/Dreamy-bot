@@ -168,7 +168,7 @@ class PersistentTicketView(discord.ui.View):
                 sky_guardians_role: discord.PermissionOverwrite(read_messages=True),
                 tech_oracle_role: discord.PermissionOverwrite(read_messages=True, manage_messages=True, manage_channels=True)
             }
-            ticket_name = f"Other-Issue-{interaction.user.display_name}'s-{str(time.time_ns())[-6:]}"
+            ticket_name = f"Other-{interaction.user.display_name}'s-{str(time.time_ns())[-6:]}"
             ticket_channel = await interaction.guild.create_text_channel(name=ticket_name, category=support_category, overwrites=overwrites)
             
             print(f"[tickets][other] Ticket created for user {interaction.user.name} in channel {ticket_channel.name}")
@@ -178,7 +178,7 @@ class PersistentTicketView(discord.ui.View):
             ticket_url = f"https://discord.com/channels/{interaction.guild.id}/{ticket_channel.id}"
             await send_message_to_user(self.client, interaction.user.id, f"Your ticket has been created: {ticket_url}")
             
-            await ticket_channel.send("# Other Issue\nAfter you are done, you can close this ticket via the button below!", view=PersistentCloseTicketView(self.client))
+            await ticket_channel.send("# Other Subject\nAfter you are done, you can close this ticket via the button below!", view=PersistentCloseTicketView(self.client))
             
             # Notify user and ping Sky Guardians role
             await ticket_channel.send(f"\n{sky_guardians_role.mention}, {interaction.user.mention} has an general issue or question.\nPlease wait until a Sky Guardian is on the case <3\nIn the meantime, please provide the context of the issue or question")
