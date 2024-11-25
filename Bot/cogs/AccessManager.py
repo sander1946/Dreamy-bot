@@ -60,8 +60,8 @@ class AccessManager(commands.Cog):
         # Set the permissions for the channel allow only the read_messages permission for the default role
         overwrites = {
             interaction.guild.default_role: discord.PermissionOverwrite(read_messages=True, add_reactions=False, send_messages=False),
-            event_luminary_role: discord.PermissionOverwrite(read_messages=True, add_reactions=True, send_messages=True),
-            sky_guardians_role: discord.PermissionOverwrite(read_messages=True, add_reactions=True, send_messages=True),
+            event_luminary_role: discord.PermissionOverwrite(read_messages=True, add_reactions=True, send_messages=True, manage_messages=True, manage_channels=True, manage_thread=True),
+            sky_guardians_role: discord.PermissionOverwrite(read_messages=True, add_reactions=True, send_messages=True, manage_messages=True, manage_channels=True, manage_thread=True),
             tech_oracle_role: discord.PermissionOverwrite(read_messages=True, add_reactions=True, send_messages=True, read_message_history=True, manage_messages=True, manage_channels=True, manage_permissions=True, administrator=True),
         }
         
@@ -106,6 +106,7 @@ class AccessManager(commands.Cog):
         
         # Set the permissions for the channel allow only the read_messages permission for the default role
         overwrites = {
+            event_luminary_role: discord.PermissionOverwrite(read_messages=True, add_reactions=True, send_messages=True, manage_messages=True, manage_channels=True, manage_thread=True),
             tech_oracle_role: discord.PermissionOverwrite(read_messages=True, add_reactions=True, send_messages=True, read_message_history=True, manage_messages=True, manage_channels=True, manage_permissions=True, administrator=True),
         }
         
