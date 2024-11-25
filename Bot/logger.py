@@ -92,7 +92,7 @@ class Logger(object):
         extra["guild_id"] = interaction.guild.id
         extra["guild_name"] = interaction.guild.name
         
-        self.log("DEBUG", f"Command executed by {extra["display_name"]} in {extra["guild_name"]}#{extra["channel_name"]} | command: {interaction.command.to_dict}", extra, depth=2)
+        self.log("DEBUG", f"Command executed by {extra['display_name']} in {extra['guild_name']}#{extra['channel_name']} | command: {interaction.command.to_dict}", extra, depth=2)
 
     def debug(self, message: str, extra: dict[str: any] = None) -> None:
         """The function to log debug messages.
