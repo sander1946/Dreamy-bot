@@ -131,6 +131,7 @@ async def ticket(interaction: discord.Interaction) -> None:
 @client.tree.command(name="force_close_ticket", description="Force close a ticket. This will CLOSE ANY channel and send the logs to the log channel.")
 async def force_close_ticket(interaction: discord.Interaction) -> None:
     logger.command(interaction)
+    logger.warning(f"User {interaction.user.name} requested to force close a ticket.")
     sky_guardians_role = interaction.guild.get_role(ids[interaction.guild.id]["sky_guardians_role_id"])
     if not sky_guardians_role:
         logger.error("Sky Guardians role not found. Please provide a valid role ID.")
@@ -163,6 +164,7 @@ async def ticket_select_callback(interaction: discord.Interaction):
     logger.command(interaction)
     await interaction.response.defer()
     if interaction.data["values"][0] == "01": # Yes, close this ticket
+        logger.warning(f"User {interaction.user.name} requested to force close a ticket.", extra={"command": "force_close_ticket", "sub_command": "close_select_callback", "user_id": interaction.user.id, "username": interaction.user.name, "display_name": interaction.user.display_name})
         await interaction.followup.send("Ticket will be force closed.")
 
         ticket_logs = ""
@@ -285,6 +287,7 @@ async def closeteam(interaction: discord.Interaction, member: discord.Member) ->
 @client.tree.command(name="force_close_team", description="Close the given leader's team.")
 async def force_close_team(interaction: discord.Interaction, member: discord.Member) -> None:
     logger.command(interaction)
+    logger.warning(f"User {interaction.user.name} requested to force close a team.")
     await interaction.response.defer(ephemeral=True)  # Defer the response to get more time
     allowed_roles: list[int] = [ids[interaction.guild.id]["sancturary_keeper_role_id"], ids[interaction.guild.id]["event_luminary_role_id"], ids[interaction.guild.id]["sky_guardians_role_id"], ids[interaction.guild.id]["tech_oracle_role_id"]]
     if not any(role.id in allowed_roles for role in interaction.user.roles):

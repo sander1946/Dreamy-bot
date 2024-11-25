@@ -55,12 +55,11 @@ class BaseModal(discord.ui.Modal):
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
         tb = "".join(traceback.format_exception(type(error), error, error.__traceback__))
         message = f"An error occurred while processing the URL, Please check the URL and try again."
-        print(f"[error][modal] Unable to process the interaction")
-        print(error)
+        logger.error(f"An error occurred while processing the URL, Please check the URL and try again.{tb}, {error}")
         try:
             await interaction.response.send_message(message, ephemeral=True)
         except discord.InteractionResponded:
-            print(f"[error][modal] {message}")
+            logger.error("An error occurred while processing the URL, Please check the URL and try again.")
         #     await interaction.edit_original_response(content=message, view=PersistentMusicView())
         self.stop()
 
@@ -95,7 +94,7 @@ class PersistentMusicView(discord.ui.View):
         self.client = client
     
     async def back_callback(self, interaction: discord.Interaction) -> None:
-        print(f"[back_callback] {interaction.user.display_name} pressed the back button")
+        logger.command(interaction, {"command": "back_callback"})
         guild_id = interaction.guild.id
     
         # Get the voice client for the guild
@@ -126,11 +125,11 @@ class PersistentMusicView(discord.ui.View):
                     await interaction.response.send_message(f"{interaction.user.mention} No previous song found.", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
         
         except Exception as e:
-            print(f"[error][player] Error skipping the song: {e}")
+            logger.error(f"Error skipping the song: {e}")
             await interaction.response.send_message(f"```ansi\n[2;31mI'm unable to skip the song at the moment```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
 
     async def pause_resume_callback(self, interaction: discord.Interaction) -> None:
-        print(f"[pause_resume_callback] {interaction.user.display_name} pressed the pause/resume button")
+        logger.command(interaction, {"command": "pause/resume"})
         try:
             voice_client = discord.utils.get(self.client.voice_clients, guild=interaction.guild)
             if voice_client:
@@ -143,11 +142,11 @@ class PersistentMusicView(discord.ui.View):
             else:
                 await interaction.response.send_message(f"{interaction.user.mention} Im not currently playing anything!", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
         except Exception as e:
-            print(f"[error][player] Error resuming the song: {e}")
+            logger.error(f"Error pausing/resuming the song: {e}")
             await interaction.response.send_message(f"```ansi\n[2;31mI'm unable to pause or resume the song at the moment```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
 
     async def skip_callback(self, interaction: discord.Interaction) -> None:
-        print(f"[skip_callback] {interaction.user.display_name} pressed the skip button")
+        logger.command(interaction, {"command": "skip"})
         guild_id = interaction.guild.id
     
         # Get the voice client for the guild
@@ -165,11 +164,11 @@ class PersistentMusicView(discord.ui.View):
                 else:
                     await interaction.response.send_message(f"{interaction.user.mention} No song is currently playing, or other items in the queue", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
         except ValueError as e:
-            print(f"[error][player] Error skipping the song: {e}")
+            logger.error(f"Error skipping the song: {e}")
             await interaction.response.send_message(f"```ansi\n[2;31mI'm unable to skip the song at the moment```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
     
     async def queue_callback(self, interaction: discord.Interaction) -> None:
-        print(f"[queue_callback] {interaction.user.display_name} pressed the queue button")
+        logger.command(interaction, {"command": "queue"})
         self.queue_modal = BaseModal(title="Enter the youtube URL")
         
         self.queue_modal.add_item(discord.ui.TextInput(label="URL", placeholder="Enter the YouTube URL of the Song or Playlist", min_length=15, max_length=100))
@@ -178,7 +177,7 @@ class PersistentMusicView(discord.ui.View):
         
     async def queue_modal_callback(self, interaction: discord.Interaction) -> None:
         url = typing.cast(discord.ui.TextInput[BaseModal], self.queue_modal.children[0]).value
-        print(f"[queue_modal_callback] {interaction.user.display_name} entered the URL: {url}")
+        logger.command(interaction, {"command": "queue_modal_callback", "url": url})
         guild_id = interaction.guild.id
 
         # Specify the channel ID or name you want the bot to join
@@ -206,7 +205,7 @@ class PersistentMusicView(discord.ui.View):
                 voice_client = await music_channel.connect()
                 voice_clients[guild_id] = voice_client
             except TypeError as e:
-                print(f"[error][player] Error connecting to the voice channel: {e}")
+                logger.error(f"Error connecting to the voice channel: {e}")
                 await interaction.response.send_message("```ansi\n[2;31mAn error occurred while trying to connect to the voice channel.```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
                 return
 
@@ -229,7 +228,7 @@ class PersistentMusicView(discord.ui.View):
             await interaction.response.send_message(f"{interaction.user.mention} Added {len(video_urls)} song(s) to the queue.", delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
     
     async def clear_queue_callback(self, interaction: discord.Interaction) -> None:
-        print(f"[clear_queue_callback] {interaction.user.display_name} pressed the clear queue button")
+        logger.command(interaction, {"command": "clear_queue"})
         guild_id = interaction.guild_id
         if guild_id in queues:
             queues.pop(guild_id)
@@ -238,7 +237,7 @@ class PersistentMusicView(discord.ui.View):
             await interaction.response.send_message(f"{interaction.user.mention} There is no queue or history to clear", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
     
     async def stop_callback(self, interaction: discord.Interaction) -> None:
-        print(f"[stop_callback] {interaction.user.display_name} pressed the stop button")
+        logger.command(interaction, {"command": "stop"})
         try:
             guild_id = interaction.guild_id
             if guild_id in voice_clients:
@@ -259,7 +258,7 @@ class PersistentMusicView(discord.ui.View):
                 voice_clients.pop(guild_id)
                 await interaction.response.send_message(f"{interaction.user.mention} Stopped the song and disconnected.", delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
         except Exception as e:
-            print(f"[error][player] Error stopping the song: {e}")
+            logger.error(f"Error stopping the song: {e}")
             await interaction.response.send_message(f"```ansi\n[2;31mI'm unable to stop the song at the moment```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
     
     async def loop_callback(self, interaction: discord.Interaction) -> None:
@@ -293,7 +292,7 @@ class PersistentMusicView(discord.ui.View):
                 # Extract song info
                 data = await loop.run_in_executor(None, lambda: ytdl.extract_info(next_url, download=False))
                 queues[guild_id]["current"] = data  # Set the current song to the next song
-                # print(f"[debug] Playing: {queues[guild_id]['current']['title']}\n[debug] current first 10 queue items: {queues[guild_id]['queue'][0:10]}\n[debug] played: {queues[guild_id]['played']}")
+                logger.debug(f"Playing: {queues[guild_id]['current']['title']}\ncurrent first 10 queue items: {queues[guild_id]['queue'][0:10]}\nplayed: {queues[guild_id]['played']}")
                 song_url = data['url']
                 
                 player = discord.FFmpegOpusAudio(song_url, **ffmpeg_options)
@@ -310,7 +309,7 @@ class PersistentMusicView(discord.ui.View):
                         voice_client: discord.VoiceClient = await music_channel.connect()
                         voice_clients[guild_id] = voice_client
                     except TypeError as e:
-                        print(f"[error][player] Error connecting to the voice channel: {e}")
+                        logger.error(f"Error connecting to the voice channel: {e}")
                         await interaction.response.send_message("```ansi\n[2;31mAn error occurred while trying to connect to the voice channel.```", ephemeral=True, delete_after=20, silent=True, allowed_mentions=discord.AllowedMentions.none())
                         return
                 try:
@@ -319,12 +318,12 @@ class PersistentMusicView(discord.ui.View):
                     pass
                 await music_spam_channel.send(f"Now playing: **{data['title']}**", delete_after=20*60) # Delete after 20 minutes to keep channel a bit clean
             except yt_dlp.DownloadError as e:
-                print(f"[error][play_next] Error downloading the song: {e}")
+                logger.error(f"Error downloading the song: {e}")
                 await music_spam_channel.send(f"```ansi\n[2;31mAn error occurred while trying to download the song. Skipping to the next song.```", delete_after=10)
                 # voice_client.stop()
                 await self.play_next(interaction)  # Automatically attempt to play the next song
             except Exception as e:
-                print(f"[error][play_next] Error playing the song: {e}")
+                logger.error(f"Error playing the song: {e}")
                 await music_spam_channel.send(f"```ansi\n[2;31mAn error occurred while trying to play the song. Skipping to the next song.```", delete_after=10)
 
                 # If an error occurs, skip to the next song

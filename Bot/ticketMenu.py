@@ -246,7 +246,7 @@ class PersistentCloseTicketView(discord.ui.View):
                     return
                 user = await self.client.fetch_user(user_id)
                 if not user:
-                    print("[error][tickets] The user that created this ticket is not found!")
+                    logger.error("The user that created this ticket is not found!", {"ticket_type": "close", "user_id": user_id})
                     await interaction.followup.send("```ansi\n[2;31mThe user that created this ticket is not found!```", ephemeral=True)
                     user = interaction.user
                 
@@ -257,8 +257,8 @@ class PersistentCloseTicketView(discord.ui.View):
                 if ticket_logs_channel:
                     await ticket_logs_channel.send(f"Transcript for {interaction.channel.name}:\nThe ticket for {user.name} a.k.a {user.display_name} has been closed by {interaction.user.name} a.k.a {interaction.user.display_name}", file=discord.File(path))
                 else:
-                    print("[warning][tickets] Ticket logs channel not found. Please provide a valid channel name.")
-                print(f"[tickets] Ticket closed by user {interaction.user.name} in channel {interaction.channel.name}")
+                    logger.error("Ticket logs channel not found. Please provide a valid channel ID.")
+                logger.info(f"Ticket closed by user {interaction.user.name} in channel {interaction.channel.name}", {"ticket_type": "close", "channel_id": interaction.channel.id})
                 
                 await interaction.channel.delete()
                 connection = create_connection("Server_data")
@@ -267,8 +267,7 @@ class PersistentCloseTicketView(discord.ui.View):
                 await send_message_to_user(self.client, user_id, "Your ticket has been closed successfully. The Transcript of the ticket has been saved.")
                 await user.send(f"Transcript for {interaction.channel.name}:", file=discord.File(path))
             else:
-                logger.warning(f"{interaction.user.name} does not have prems to close ticket {interaction.channel.name}")
-                print(f"[warning][tickets] {interaction.user.name} does not have prems to close ticket {interaction.channel.name}")
+                logger.error("User does not have permission to close this ticket", {"ticket_type": "close", "user_id": interaction.user.id, "channel_id": interaction.channel.name})
                 await interaction.followup.send("You do not have permission to use this command.", ephemeral=True)
 
         elif interaction.data["values"][0] == "02": # No, keep this ticket open
