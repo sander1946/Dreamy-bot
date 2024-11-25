@@ -20,7 +20,7 @@ from ticketMenu import PersistentTicketView, PersistentCloseTicketView
 from musicMenu import PersistentMusicView
 from cogs.RunManager import RunManager
 from cogs.AccessManager import AccessManager, PersistentAcceptRulesView
-from logger import logger
+from logger import Logger
 
 # 3rd party imports
 
@@ -58,7 +58,7 @@ with open(f"{dir}/whitelist.json", "r") as file:
 
 
 # load up the logger
-logger = logger()
+logger = Logger()
 
 
 # Startup of the bot
@@ -76,6 +76,8 @@ async def on_ready() -> None:
         for rule_channel in rule_channels:
             channel = await client.fetch_channel(rule_channel["channel_id"])
             client.add_view(PersistentAcceptRulesView(client, channel))
+    else:
+        logger.debug("No rule channels found in the database.")
     close_connection(connection)
     
     # Load the cogs
@@ -84,14 +86,17 @@ async def on_ready() -> None:
     
     # Set Rich Presence (Streaming)
     if TESTING == "True":
+        logger.info("Bot is in testing mode.")
         # Under Development (Do not disturb)
         activity = discord.Activity(type=discord.ActivityType.playing, name="Do not disturb, im getting tested")
         await client.change_presence(status=discord.Status.do_not_disturb, activity=activity)
     else:
+        logger.info("Bot is in production mode.")
         # Streaming PixelPoppyTV (streaming)
         activity = discord.Activity(type=discord.ActivityType.streaming, name="PixelPoppyTV", url="https://www.twitch.tv/pixelpoppytv", details="PixelPoppyTV", state="Sky: Children of The Light")
         await client.change_presence(status=discord.Status.online, activity=activity)
     
+    logger.debug("Syncing slash commands...")
     await client.tree.sync()  # Sync slash commands
 
 
