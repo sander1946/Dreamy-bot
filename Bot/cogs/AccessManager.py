@@ -74,6 +74,11 @@ class AccessManager(commands.Cog):
     @is_eventlumi()
     async def removeRuleGate(self, interaction: discord.Interaction, channel: discord.abc.GuildChannel) -> None:
         await interaction.response.defer(ephemeral=True)  # Defer the response to get more time
+        
+        if channel.id != 1252671211255762976:
+            await interaction.followup.send("This command can only be used in the rules channel.", ephemeral=True)
+            return
+        
         if channel.type == discord.ChannelType.voice:
             await interaction.followup.send(content="The channel can't be a voice channel.", ephemeral=True)
             return
