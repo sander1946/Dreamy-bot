@@ -112,7 +112,7 @@ async def help_command(interaction: discord.Interaction):
 async def ping(interaction: discord.Interaction) -> None:
     logger.command(interaction)
     await interaction.response.send_message(f"Pong! that took me {round(client.latency * 1000)}ms to respond")
-    print(f"[info] {interaction.user.name} requested the bot's latency, it's {round(client.latency * 1000)}ms")
+    logger.info(f"{interaction.user.name} requested the bot's latency, it's {round(client.latency * 1000)}ms")
 
 # ticket commands
 @client.tree.command(name="ticket_menu", description="Create a ticket create menu.")
@@ -133,13 +133,13 @@ async def force_close_ticket(interaction: discord.Interaction) -> None:
     logger.command(interaction)
     sky_guardians_role = interaction.guild.get_role(ids[interaction.guild.id]["sky_guardians_role_id"])
     if not sky_guardians_role:
-        print("[error][tickets] Sky Guardians role not found. Please provide a valid role ID.")
+        logger.error("Sky Guardians role not found. Please provide a valid role ID.")
         await interaction.followup.send("```ansi\n[2;31mSky Guardians role not found. Please provide a valid role ID.```", ephemeral=True)
         return
     
     tech_oracle_role = interaction.guild.get_role(ids[interaction.guild.id]["tech_oracle_role_id"])
     if not tech_oracle_role:
-        print("[error][tickets] Tech Oracle role not found. Please provide a valid role ID.")
+        logger.error("Tech Oracle role not found. Please provide a valid role ID.")
         await interaction.followup.send("```ansi\n[2;31mTech Oracle role not found. Please provide a valid role ID.```", ephemeral=True)
         return
     
@@ -155,7 +155,7 @@ async def force_close_ticket(interaction: discord.Interaction) -> None:
         await interaction.response.send_message("Do you really want to close the ticket?", view=view, ephemeral=True, delete_after=60)
     
     else:
-        print(f"[warning][tickets] {interaction.user.name} does not have prems to close ticket {interaction.channel.name}")
+        logger.error(f"User {interaction.user.name} does not have permission to use this command.")
         await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
 
 
@@ -172,8 +172,8 @@ async def ticket_select_callback(interaction: discord.Interaction):
         if ticket_logs_channel:
             await ticket_logs_channel.send(f"Transcript for {interaction.channel.name}:\nThe ticket channel {interaction.channel.name} has been **force** closed by {interaction.user.name} a.k.a {interaction.user.display_name}", file=discord.File(path))
         else:
-            print("[warning][tickets] Ticket logs channel not found. Please provide a valid channel name.")
-        print(f"[tickets] Ticket closed by user {interaction.user.name} in channel {interaction.channel.name}")
+            logger.error("Ticket logs channel not found. Please provide a valid channel ID.")
+        logger.info(f"Ticket {interaction.channel.name} has been force closed by {interaction.user.name} a.k.a {interaction.user.display_name}")
         await interaction.channel.delete()
         await interaction.user.send("Your ticket has been closed successfully. The Transcript of the ticket has been saved.")
         await interaction.user.send(f"Transcript for {interaction.channel.name}:", file=discord.File(path))
@@ -189,7 +189,7 @@ async def timers(interaction: discord.Interaction) -> None:
     logger.command(interaction)
     timer_channel_url = "https://discord.com/channels/1239651599480127649/1252324353115291849/1252324488901824556"
     response = "Here is the url to the channel with all the timers:\n" + timer_channel_url
-    print(f"[info] {interaction.user.name} requested the timer")
+    logger.debug(f"User {interaction.user.name} requested the timers link.")
     await interaction.response.send_message(response)
     
 
@@ -208,7 +208,7 @@ async def createteam(interaction: discord.Interaction, member: discord.Member, e
             message = await client.fetch_channel(teams[member.id]["channel_id"]).fetch_message(teams[member.id]["message_id"])
             await interaction.followup.send("This user already leads a team.", ephemeral=True)
         except discord.NotFound:
-            print(f"[teams] Team message not found for user {member.id}.")
+            logger.error(f"Team message not found for user {member.id}.")
         return
 
     if len(teams) >= max_teams:
@@ -216,7 +216,7 @@ async def createteam(interaction: discord.Interaction, member: discord.Member, e
         return
     
     emoji = emoji.strip()  # Remove the colons from the emoji if present
-    print(f"[teams] Creating a team with {member.name}:{member.id} as the leader and {emoji} as the emoji.")
+    logger.debug(f"Creating team {emoji} with leader {member.name}:{member.id} and max size {max_size} in channel {interaction.channel.id}.")
     
     await interaction.followup.send(f"Team {emoji} has been created!", ephemeral=False)
     team_message = f"__**Group Leader**__\n{member.mention} {emoji}\n\n__**Members**__\n"
@@ -224,7 +224,13 @@ async def createteam(interaction: discord.Interaction, member: discord.Member, e
     message = await interaction.channel.send(team_message, allowed_mentions=discord.AllowedMentions.none())
 
     # Add the bot's reaction
-    await message.add_reaction(emoji)
+    try:
+        await message.add_reaction(emoji)
+    except discord.HTTPException as e:
+        logger.error(f"An error occurred while adding a reaction to the message: {e}")
+        await interaction.followup.send("An error occurred while adding a reaction to the message.", ephemeral=True)
+        await message.delete()
+        return
     
 
     # Save team information
@@ -240,7 +246,7 @@ async def createteam(interaction: discord.Interaction, member: discord.Member, e
         "channel_id": interaction.channel.id,  # Track the channel ID
         "resetting": False  # Track if the team is currently resetting
     }
-    print(f"[debug][teams] {teams[member.id]}")
+    logger.debug(f"Team {emoji} created by {member.name}:{member.id} with message ID {message.id} in channel {interaction.channel.id}.")
 
 
 @client.tree.command(name="closeteam", description="Close the given leader's team.")
@@ -268,7 +274,7 @@ async def closeteam(interaction: discord.Interaction, member: discord.Member) ->
         message = await channel.fetch_message(team_data["message_id"])  # Fetch the message
         await message.delete()  # Delete the message
     except discord.NotFound:
-        print(f"[teams] Team message not found for user {member.id}.")
+        logger.error(f"Team message not found for user {member.id}.")
         await interaction.followup.send(f"Team {team_data['emoji']} led by {member.mention} message was not found.", ephemeral=True)
 
     await interaction.channel.send(f"Team {team_data['emoji']} led by {member.mention} has been closed.", allowed_mentions=discord.AllowedMentions.none())
@@ -323,7 +329,7 @@ async def lockteam(interaction: discord.Interaction, member: discord.Member) -> 
         channel = client.get_channel(team_data["channel_id"])  # Get the team's channel
         message = await channel.fetch_message(team_data["message_id"])  # Fetch the message
     except discord.NotFound:
-        print(f"[teams] Team message not found for user {member.id}.")
+        logger.error(f"Team message not found for user {member.id}.")
         await interaction.followup.send(f"Team {team_data['emoji']} led by {member.mention} message was not found.\nUse `/force_close_team` to close the team", ephemeral=True)
         return
     
@@ -367,7 +373,7 @@ async def unlockteam(interaction: discord.Interaction, member: discord.Member) -
         reset_message = f"__**Group Leader**__\n{client.get_user(team_data['leader_id']).mention} :{team_data['emoji']}:\n\n__**Members**__\n<> The bot is currently resetting the player list. Please wait. <>"
         await message.edit(content=reset_message)
     except discord.NotFound:
-        print(f"[teams] Team message not found for user {member.id}.")
+        logger.error(f"Team message not found for user {member.id}.")
         await interaction.followup.send(f"Team {team_data['emoji']} led by {member.mention} message was not found.\nUse `/force_close_team` to close the team", ephemeral=True)
         return
     
@@ -386,7 +392,7 @@ async def unlockteam(interaction: discord.Interaction, member: discord.Member) -
         for reactor in sorted_reactors:
             if len(team_data["members"]) < team_data["max_members"]:
                 team_data["members"].append(reactor["user_id"])
-                print(f"[teams] Added user {reactor['user_id']} to team {team_data['leader_id']} after unlocking.")
+                logger.debug(f"Adding user {reactor['user_id']} to team {member.id}")
         
         # Inform the channel if the team is full again
         if len(team_data["members"]) >= team_data["max_members"]:
@@ -452,11 +458,11 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent) -> None:
                 emoji = f"<:{payload.emoji.name}:{payload.emoji.id}>"
             else:
                 emoji = payload.emoji.name
-            print(f"[teams] User {user_id} reacted with {emoji} to team {team_id}")
+            logger.debug(f"User {user_id} reacted with {emoji} to team {team_id}")
 
             if user_id != client.user.id and emoji == team["emoji"]:
                 team_leader_id = team["leader_id"]
-                print(f"[teams] User {user_id} reacted with {emoji} to team {team_leader_id}")
+                logger.debug(f"User {user_id} reacted with {emoji} to team {team_id} led by {team_leader_id}")
                 channel = client.get_channel(payload.channel_id)
 
                 # Skip updating members list if team is resetting
@@ -482,9 +488,8 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent) -> None:
                         # Check if team is full and not locked yet
                         if len(team["members"]) + 1 < team["max_members"]:
                             team["members"].append(user_id)  # Add member to the list
-                            print(f"[teams] Added user {user_id} to team {team_leader_id}")
-                            print(f"this team now has {len(team['members']) + 1} members including the leader")
-                            print(team["members"])
+                            logger.debug(f"Added user {user_id} to team {team_leader_id}")
+                            logger.debug(f"This team now has {len(team['members']) + 1} members including the leader", extra={"team": team})
                         else:
                             return  # Do not add user if team is full
 
@@ -496,9 +501,9 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent) -> None:
                                 member_mentions.append(member.mention)
                             except discord.NotFound:
                                 # Handle the case where the user cannot be found
-                                print(f"[teams] User with ID {member_id} not found.")
+                                logger.error(f"User with ID {member_id} not found.")
                             except Exception as e:
-                                print(f"[teams] An error occurred while fetching user {member_id}: {e}")
+                                logger.error(f"An error occurred while fetching user {member_id}: {e}")
 
                         member_names_str = "\n".join(member_mentions)
 
@@ -506,10 +511,10 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent) -> None:
                         try:
                             team_leader = await client.fetch_user(team_leader_id)
                         except discord.NotFound:
-                            print(f"[teams] Team leader with ID {team_leader_id} not found.")
+                            logger.error(f"User with ID {team_leader_id} not found.")
                             team_leader = None
                         except Exception as e:
-                            print(f"[teams] An error occurred while fetching team leader {team_leader_id}: {e}")
+                            logger.error(f"An error occurred while fetching user {team_leader_id}: {e}")
                             team_leader = None
 
                         if team_leader is not None:
@@ -518,7 +523,7 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent) -> None:
                                 f"__**Members**__\n{member_names_str}"
                             )
                         else:
-                            print(f"[teams] Could not find user with ID {team_leader_id}")
+                            logger.error(f"Team leader with ID {team_leader_id} not found.")
                             updated_message = (
                                 f"__**Group Leader**__\n(Unknown user) :{team['emoji']}:\n\n"
                                 f"__**Members**__\n{member_names_str}"
@@ -526,7 +531,7 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent) -> None:
 
                         # Update the message
                         message = await channel.fetch_message(message_id)
-                        print(f"[teams] Updating message {message_id}")
+                        logger.debug(f"Updating message {message_id} with new member list.")
                         await message.edit(content=updated_message, allowed_mentions=discord.AllowedMentions.none())
 
                         # Lock the team if it's full
@@ -557,7 +562,7 @@ async def on_raw_reaction_remove(payload: discord.RawReactionActionEvent) -> Non
                 return
             
             team["members"].remove(user_id)  # Remove member from the list
-            print(f"[teams] Removed user {user_id} from team {team_id}")
+            logger.debug(f"Removed user {user_id} from team {team_id}")
 
             # Update the message
             member_mentions = []
@@ -568,9 +573,9 @@ async def on_raw_reaction_remove(payload: discord.RawReactionActionEvent) -> Non
                         member_mentions.append(member.mention)
                     except discord.NotFound:
                         # Handle the case where the user cannot be found
-                        print(f"[teams] User with ID {member_id} not found.")
+                        logger.error(f"User with ID {member_id} not found.")
                     except Exception as e:
-                        print(f"[teams] An error occurred while fetching user {member_id}: {e}")
+                        logger.error(f"An error occurred while fetching user {member_id}: {e}")
                         
             member_names_str = "\n".join(member_mentions)
             updated_message = (
@@ -592,9 +597,9 @@ async def on_raw_reaction_remove(payload: discord.RawReactionActionEvent) -> Non
                 channel = client.get_channel(channel_id)
                 message = await channel.fetch_message(message_id)
                 await message.edit(content=updated_message, allowed_mentions=discord.AllowedMentions.none())
-                print(f"[teams] Updated message {message_id}")
+                logger.debug(f"Updating message {message_id} with new member list.")
             except Exception as e:
-                print(f"[teams] Failed to update message {message_id}: {e}")
+                logger.error(f"An error occurred while updating the message: {e}")
 
 
 # Error handling for command not found
@@ -603,9 +608,9 @@ async def on_command_error(ctx: commands.Context, error):
     if isinstance(error, commands.CommandNotFound):
         command = ctx.message.content.lower().strip(bot_prefix)
         if command in command_whitelist:
-            print(f"[info] {ctx.author} tried to use an whitelisted command in channel {ctx.channel}: {ctx.message.content}")
+            logger.debug(f"{ctx.author} tried to use an whitelisted command in channel {ctx.channel}: {ctx.message.content}")
             return
-        print(f"[warning] {ctx.author} tried to use an unknown command in channel {ctx.channel}: {ctx.message.content}")
+        logger.warning(f"{ctx.author} tried to use an unknown command in channel {ctx.channel}: {ctx.message.content}")
         # await ctx.send(f"Command not found! Please check your command or use `/help` for available commands.")
         await ctx.reply("Command not found! Please check your command or use `/help` for available commands.", ephemeral=True, delete_after=10)
         await ctx.message.delete(delay=10)
