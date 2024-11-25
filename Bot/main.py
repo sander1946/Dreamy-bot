@@ -20,6 +20,7 @@ from ticketMenu import PersistentTicketView, PersistentCloseTicketView
 from musicMenu import PersistentMusicView
 from cogs.RunManager import RunManager
 from cogs.AccessManager import AccessManager, PersistentAcceptRulesView
+from logger import logger
 
 # 3rd party imports
 
@@ -56,10 +57,14 @@ with open(f"{dir}/whitelist.json", "r") as file:
     command_whitelist = json.load(file)["no_error_commands"]
 
 
+# load up the logger
+logger = logger()
+
+
 # Startup of the bot
 @client.event
 async def on_ready() -> None:
-    print(f"\n\n[info] Bot is ready as {client.user}\n")
+    logger.log("PRINT", f"Bot is ready as {client.user}")
     
     client.add_view(PersistentTicketView(client))
     client.add_view(PersistentCloseTicketView(client))
