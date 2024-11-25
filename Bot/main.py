@@ -21,7 +21,6 @@ from musicMenu import PersistentMusicView
 from cogs.RunManager import RunManager
 from cogs.AccessManager import AccessManager, PersistentAcceptRulesView
 from logger import Logger
-
 # 3rd party imports
 
 
@@ -63,9 +62,7 @@ logger = Logger()
 
 # Startup of the bot
 @client.event
-async def on_ready() -> None:
-    logger.log("PRINT", f"Bot is ready as {client.user}")
-    
+async def on_ready() -> None:    
     client.add_view(PersistentTicketView(client))
     client.add_view(PersistentCloseTicketView(client))
     client.add_view(PersistentMusicView(client))
@@ -98,6 +95,7 @@ async def on_ready() -> None:
     
     logger.debug("Syncing slash commands...")
     await client.tree.sync()  # Sync slash commands
+    logger.log("PRINT", f"Bot is ready as {client.user}")
 
 
 @client.tree.command(name="help", description="Lists all available commands.")
