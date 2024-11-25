@@ -13,6 +13,7 @@ import os
 
 # local imports
 from functions import load_ids, get_video_urls
+from logger import logger
 
 # 3rd party imports
 import yt_dlp
