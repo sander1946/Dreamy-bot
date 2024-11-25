@@ -8,6 +8,7 @@ import time
 
 # local imports
 from functions import send_message_to_user, create_connection, save_ticket_to_db, load_ticket_from_db, close_connection, load_ids, delete_ticket_from_db, save_transcript
+from logger import logger
 
 ids: dict[int, dict[str, int]] = load_ids()
 
@@ -32,33 +33,35 @@ class PersistentTicketView(discord.ui.View):
         await interaction.response.send_message("Select the type of ticket you would like to create.", view=view, ephemeral=True, delete_after=60)
     
     async def select_callback(self, interaction: discord.Interaction):
+        logger.command(interaction, {"command": "ticket", "sub_command": "create_select_callback"})
         await interaction.response.defer()
         
         support_category = discord.utils.get(interaction.guild.categories, id=ids[interaction.guild.id]["support_category_id"])
         if not support_category:
-            print("[error][tickets] Support category not found. Please provide a valid category ID.")
+            logger.error("Support category not found. Please provide a valid category ID.")
             await interaction.followup.send("```ansi\n[2;31mSupport category not found. Please provide a valid category ID.```", ephemeral=True)
             return
         
         sky_guardians_role = interaction.guild.get_role(ids[interaction.guild.id]["sky_guardians_role_id"])
         if not sky_guardians_role:
-            print("[error][tickets] Sky Guardians role not found. Please provide a valid role ID.")
+            logger.error("Sky Guardians role not found. Please provide a valid role ID.")
             await interaction.followup.send("```ansi\n[2;31mSky Guardians role not found. Please provide a valid role ID.```", ephemeral=True)
             return
         
         tech_oracle_role = interaction.guild.get_role(ids[interaction.guild.id]["tech_oracle_role_id"])
         if not tech_oracle_role:
-            print("[error][tickets] Tech Oracle role not found. Please provide a valid role ID.")
+            logger.error("Tech Oracle role not found. Please provide a valid role ID.")
             await interaction.followup.send("```ansi\n[2;31mTech Oracle role not found. Please provide a valid role ID.```", ephemeral=True)
             return
 
         owner = await self.client.fetch_user(ids[interaction.guild.id]["owner_id"]) 
         if not owner:
-            print("[error][tickets] owner user not found. Please provide a valid user ID.")
+            logger.error("Owner was not found. Please provide a valid user ID.")
             await interaction.followup.send("```ansi\n[2;31mowner was not found. Please provide a valid user ID.```", ephemeral=True)
             return
         
         if interaction.data["values"][0] == "01": # Inappropriate Behavior
+            logger.info(f"Ticket created for user {interaction.user.name}", {"ticket_type": "inappropriate"})
             overwrites = {
                 interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False),
                 interaction.guild.me: discord.PermissionOverwrite(read_messages=True),
@@ -70,7 +73,7 @@ class PersistentTicketView(discord.ui.View):
             ticket_name = f"User-Report-{interaction.user.display_name}-{str(time.time_ns())[-6:]}"
             ticket_channel = await interaction.guild.create_text_channel(name=ticket_name, category=support_category, overwrites=overwrites)
             
-            print(f"[tickets][inappropriate] Ticket created for user {interaction.user.name} in channel {ticket_channel.name}")
+            logger.debug(f"Ticket created for user {interaction.user.name} in channel {ticket_channel.name}", {"ticket_type": "inappropriate", "channel_id": ticket_channel.id})
             
             await interaction.followup.send("A ticket for Inappropriate Behavior has been created!", ephemeral=True)
             
@@ -85,6 +88,7 @@ class PersistentTicketView(discord.ui.View):
             await owner.send(f"A user report ticket has been created by {interaction.user.mention}: {ticket_url}")
             
         elif interaction.data["values"][0] == "02": # Discord Server Issue
+            logger.info(f"Ticket created for user {interaction.user.name}", {"ticket_type": "server"})
             overwrites = {
                 interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False),
                 interaction.guild.me: discord.PermissionOverwrite(read_messages=True),
@@ -96,7 +100,7 @@ class PersistentTicketView(discord.ui.View):
             ticket_name = f"Server-Issue-{interaction.user.display_name}-{str(time.time_ns())[-6:]}"
             ticket_channel = await interaction.guild.create_text_channel(name=ticket_name, category=support_category, overwrites=overwrites)
             
-            print(f"[tickets][Server] Ticket created for user {interaction.user.name} in channel {ticket_channel.name}")
+            logger.debug(f"Ticket created for user {interaction.user.name} in channel {ticket_channel.name}", {"ticket_type": "server", "channel_id": ticket_channel.id})
             
             await interaction.followup.send("A ticket for a server issue has been created!", ephemeral=True)
             
@@ -111,6 +115,7 @@ class PersistentTicketView(discord.ui.View):
             await owner.send(f"A server issue ticket has been created by {interaction.user.mention}: {ticket_url}")
             
         elif interaction.data["values"][0] == "03": # Bot Issues, no need for Sky Guardians
+            logger.info(f"Ticket created for user {interaction.user.name}", {"ticket_type": "bot"})
             overwrites = {
                 interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False),
                 interaction.guild.me: discord.PermissionOverwrite(read_messages=True),
@@ -121,7 +126,7 @@ class PersistentTicketView(discord.ui.View):
             ticket_name = f"Bot-Issue-{interaction.user.display_name}-{str(time.time_ns())[-6:]}"
             ticket_channel = await interaction.guild.create_text_channel(name=ticket_name, category=support_category, overwrites=overwrites)
             
-            print(f"[tickets][bot] Ticket created for user {interaction.user.name} in channel {ticket_channel.name}")
+            logger.debug(f"Ticket created for user {interaction.user.name} in channel {ticket_channel.name}", {"ticket_type": "bot", "channel_id": ticket_channel.id})
             
             await interaction.followup.send("A ticket for a issue with the bot has been created!", ephemeral=True)
             
@@ -136,6 +141,7 @@ class PersistentTicketView(discord.ui.View):
             await owner.send(f"A bot issue ticket has been created by {interaction.user.mention}: {ticket_url}")
         
         elif interaction.data["values"][0] == "04": # Removal of a Post
+            logger.info(f"Ticket created for user {interaction.user.name}", {"ticket_type": "removal"})
             overwrites = {
                 interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False),
                 interaction.guild.me: discord.PermissionOverwrite(read_messages=True),
@@ -146,7 +152,7 @@ class PersistentTicketView(discord.ui.View):
             ticket_name = f"Removal-request-{interaction.user.display_name}-{str(time.time_ns())[-6:]}"
             ticket_channel = await interaction.guild.create_text_channel(name=ticket_name, category=support_category, overwrites=overwrites)
             
-            print(f"[tickets][removal] Ticket created for user {interaction.user.name} in channel {ticket_channel.name}")
+            logger.debug(f"Ticket created for user {interaction.user.name} in channel {ticket_channel.name}", {"ticket_type": "removal", "channel_id": ticket_channel.id})
             
             await interaction.followup.send("A ticket for a post removal has been created!", ephemeral=True)
             
@@ -161,6 +167,7 @@ class PersistentTicketView(discord.ui.View):
             await owner.send(f"A post removal request has been created by {interaction.user.mention}: {ticket_url}")
         
         elif interaction.data["values"][0] == "05": # Other Issue or Subject
+            logger.info(f"Ticket created for user {interaction.user.name}", {"ticket_type": "other"})
             overwrites = {
                 interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False),
                 interaction.guild.me: discord.PermissionOverwrite(read_messages=True),
@@ -171,7 +178,7 @@ class PersistentTicketView(discord.ui.View):
             ticket_name = f"Other-{interaction.user.display_name}'s-{str(time.time_ns())[-6:]}"
             ticket_channel = await interaction.guild.create_text_channel(name=ticket_name, category=support_category, overwrites=overwrites)
             
-            print(f"[tickets][other] Ticket created for user {interaction.user.name} in channel {ticket_channel.name}")
+            logger.debug(f"Ticket created for user {interaction.user.name} in channel {ticket_channel.name}", {"ticket_type": "other", "channel_id": ticket_channel.id})
             
             await interaction.followup.send("A ticket for general or other issues has been created!", ephemeral=True)
             
@@ -186,6 +193,7 @@ class PersistentTicketView(discord.ui.View):
             await owner.send(f"A general ticket has been created by {interaction.user.mention}: {ticket_url}")
             
         else: # Invalid selection
+            logger.warning("Invalid selection", {"ticket_type": "invalid", "selection": interaction.data["values"][0]})
             await interaction.followup.send("Invalid selection", ephemeral=True)
             return # Exit the function
         connection = create_connection("Server_data")
@@ -200,6 +208,7 @@ class PersistentCloseTicketView(discord.ui.View):
         self.client = client
 
     async def close_callback(self, interaction: discord.Interaction) -> None:
+        logger.command(interaction, {"command": "ticket", "sub_command": "close_callback"})
         select = Select(options=[
             discord.SelectOption(label="Yes, close this ticket", value="01", emoji="☑️", description="This closes the ticket and will mark it as solved"),
             discord.SelectOption(label="No, keep this ticket open", value="02", emoji="✖️", description="This will keep the ticket open and allow you to continue the conversation"),
@@ -211,20 +220,22 @@ class PersistentCloseTicketView(discord.ui.View):
         await interaction.response.send_message("Do you really want to close the ticket?", view=view, ephemeral=True, delete_after=60)
 
     async def select_callback(self, interaction: discord.Interaction):
+        logger.command(interaction, {"command": "ticket", "sub_command": "close_select_callback"})
         await interaction.response.defer()
         sky_guardians_role = interaction.guild.get_role(ids[interaction.guild.id]["sky_guardians_role_id"])
         if not sky_guardians_role:
-            print("[error][tickets] Sky Guardians role not found. Please provide a valid role ID.")
+            logger.error("Sky Guardians role not found. Please provide a valid role ID.")
             await interaction.followup.send("```ansi\n[2;31mSky Guardians role not found. Please provide a valid role ID.```", ephemeral=True)
             return
         
         tech_oracle_role = interaction.guild.get_role(ids[interaction.guild.id]["tech_oracle_role_id"])
         if not tech_oracle_role:
-            print("[error][tickets] Tech Oracle role not found. Please provide a valid role ID.")
+            logger.error("Tech Oracle role not found. Please provide a valid role ID.")
             await interaction.followup.send("```ansi\n[2;31mTech Oracle role not found. Please provide a valid role ID.```", ephemeral=True)
             return
         
         if interaction.data["values"][0] == "01": # Yes, close this ticket
+            logger.info(f"Ticket closed by user {interaction.user.name} in channel {interaction.channel.name}")
             if interaction.user.id != ids[interaction.guild.id]["owner_id"] or sky_guardians_role in interaction.user.roles or tech_oracle_role in interaction.user.roles:
                 await interaction.followup.send("Ticket will be closed.", ephemeral=True)
                 connection = create_connection("Server_data")
@@ -256,11 +267,14 @@ class PersistentCloseTicketView(discord.ui.View):
                 await send_message_to_user(self.client, user_id, "Your ticket has been closed successfully. The Transcript of the ticket has been saved.")
                 await user.send(f"Transcript for {interaction.channel.name}:", file=discord.File(path))
             else:
+                logger.warning(f"{interaction.user.name} does not have prems to close ticket {interaction.channel.name}")
                 print(f"[warning][tickets] {interaction.user.name} does not have prems to close ticket {interaction.channel.name}")
                 await interaction.followup.send("You do not have permission to use this command.", ephemeral=True)
 
         elif interaction.data["values"][0] == "02": # No, keep this ticket open
+            logger.info(f"Ticket kept open by user {interaction.user.name} in channel {interaction.channel.name}")
             await interaction.followup.send("This ticket will remain open.", ephemeral=True)
         
         else: # Invalid selection
+            logger.error("Invalid selection", {"ticket_type": "invalid", "selection": interaction.data["values"][0]})
             await interaction.followup.send("Invalid selection", ephemeral=True)

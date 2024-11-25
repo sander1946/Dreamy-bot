@@ -1,4 +1,5 @@
 # discord imports
+import sys
 from discord.ext import commands
 from discord import app_commands
 import discord
@@ -20,8 +21,7 @@ from ticketMenu import PersistentTicketView, PersistentCloseTicketView
 from musicMenu import PersistentMusicView
 from cogs.RunManager import RunManager
 from cogs.AccessManager import AccessManager, PersistentAcceptRulesView
-from logger import Logger
-# 3rd party imports
+from logger import logger
 
 
 # Load the environment variables
@@ -54,10 +54,6 @@ client = commands.Bot(command_prefix="!", intents=intents)
 dir = os.path.dirname(__file__)
 with open(f"{dir}/whitelist.json", "r") as file:
     command_whitelist = json.load(file)["no_error_commands"]
-
-
-# load up the logger
-logger = Logger()
 
 
 # Startup of the bot
@@ -100,6 +96,7 @@ async def on_ready() -> None:
 
 @client.tree.command(name="help", description="Lists all available commands.")
 async def help_command(interaction: discord.Interaction):
+    logger.command(interaction)
     # Create an embed for displaying the commands
     embed = discord.Embed(title="Dreamy Commands 🍃", description="Here is everything I can do for you!", color=discord.Color.green())
     embed.set_image(url="https://i.postimg.cc/28LPZLBW/20240821214134-1.jpg")
@@ -113,12 +110,14 @@ async def help_command(interaction: discord.Interaction):
 
 @client.tree.command(name="ping", description="Check the bot's current latency.")
 async def ping(interaction: discord.Interaction) -> None:
+    logger.command(interaction)
     await interaction.response.send_message(f"Pong! that took me {round(client.latency * 1000)}ms to respond")
     print(f"[info] {interaction.user.name} requested the bot's latency, it's {round(client.latency * 1000)}ms")
 
 # ticket commands
 @client.tree.command(name="ticket_menu", description="Create a ticket create menu.")
 async def ticket(interaction: discord.Interaction) -> None:
+    logger.command(interaction)
     await interaction.response.defer()
     allowed_roles: list[int] = [ids[interaction.guild.id]["sancturary_keeper_role_id"], ids[interaction.guild.id]["sky_guardians_role_id"], ids[interaction.guild.id]["tech_oracle_role_id"]]
     if not any(role.id in allowed_roles for role in interaction.user.roles):
@@ -131,6 +130,7 @@ async def ticket(interaction: discord.Interaction) -> None:
 
 @client.tree.command(name="force_close_ticket", description="Force close a ticket. This will CLOSE ANY channel and send the logs to the log channel.")
 async def force_close_ticket(interaction: discord.Interaction) -> None:
+    logger.command(interaction)
     sky_guardians_role = interaction.guild.get_role(ids[interaction.guild.id]["sky_guardians_role_id"])
     if not sky_guardians_role:
         print("[error][tickets] Sky Guardians role not found. Please provide a valid role ID.")
@@ -160,6 +160,7 @@ async def force_close_ticket(interaction: discord.Interaction) -> None:
 
 
 async def ticket_select_callback(interaction: discord.Interaction):
+    logger.command(interaction)
     await interaction.response.defer()
     if interaction.data["values"][0] == "01": # Yes, close this ticket
         await interaction.followup.send("Ticket will be force closed.")
@@ -185,6 +186,7 @@ async def ticket_select_callback(interaction: discord.Interaction):
 # info commands
 @client.tree.command(name="timers", description="Gives the link to all of the timers.")
 async def timers(interaction: discord.Interaction) -> None:
+    logger.command(interaction)
     timer_channel_url = "https://discord.com/channels/1239651599480127649/1252324353115291849/1252324488901824556"
     response = "Here is the url to the channel with all the timers:\n" + timer_channel_url
     print(f"[info] {interaction.user.name} requested the timer")
@@ -194,6 +196,7 @@ async def timers(interaction: discord.Interaction) -> None:
 # Team commands
 @client.tree.command(name="createteam", description="Create a team with a leader and an emoji.")
 async def createteam(interaction: discord.Interaction, member: discord.Member, emoji: str, max_size: int = 8) -> None:
+    logger.command(interaction)
     await interaction.response.defer(ephemeral=True)  # Defer the response to get more time
     allowed_roles: list[int] = [ids[interaction.guild.id]["sancturary_keeper_role_id"], ids[interaction.guild.id]["event_luminary_role_id"], ids[interaction.guild.id]["sky_guardians_role_id"], ids[interaction.guild.id]["tech_oracle_role_id"]]
     if not any(role.id in allowed_roles for role in interaction.user.roles):
@@ -242,6 +245,7 @@ async def createteam(interaction: discord.Interaction, member: discord.Member, e
 
 @client.tree.command(name="closeteam", description="Close the given leader's team.")
 async def closeteam(interaction: discord.Interaction, member: discord.Member) -> None:
+    logger.command(interaction)
     await interaction.response.defer(ephemeral=True)  # Defer the response to get more time
     allowed_roles: list[int] = [ids[interaction.guild.id]["sancturary_keeper_role_id"], ids[interaction.guild.id]["event_luminary_role_id"], ids[interaction.guild.id]["sky_guardians_role_id"], ids[interaction.guild.id]["tech_oracle_role_id"]]
     if not any(role.id in allowed_roles for role in interaction.user.roles):
@@ -274,6 +278,7 @@ async def closeteam(interaction: discord.Interaction, member: discord.Member) ->
 
 @client.tree.command(name="force_close_team", description="Close the given leader's team.")
 async def force_close_team(interaction: discord.Interaction, member: discord.Member) -> None:
+    logger.command(interaction)
     await interaction.response.defer(ephemeral=True)  # Defer the response to get more time
     allowed_roles: list[int] = [ids[interaction.guild.id]["sancturary_keeper_role_id"], ids[interaction.guild.id]["event_luminary_role_id"], ids[interaction.guild.id]["sky_guardians_role_id"], ids[interaction.guild.id]["tech_oracle_role_id"]]
     if not any(role.id in allowed_roles for role in interaction.user.roles):
@@ -296,6 +301,7 @@ async def force_close_team(interaction: discord.Interaction, member: discord.Mem
 
 @client.tree.command(name="lockteam", description="Lock the given leader's team.")
 async def lockteam(interaction: discord.Interaction, member: discord.Member) -> None:
+    logger.command(interaction)
     await interaction.response.defer(ephemeral=True)  # Defer the response to get more time
     allowed_roles: list[int] = [ids[interaction.guild.id]["sancturary_keeper_role_id"], ids[interaction.guild.id]["event_luminary_role_id"], ids[interaction.guild.id]["sky_guardians_role_id"], ids[interaction.guild.id]["tech_oracle_role_id"]]
     if not any(role.id in allowed_roles for role in interaction.user.roles):
@@ -333,6 +339,7 @@ async def lockteam(interaction: discord.Interaction, member: discord.Member) -> 
 
 @client.tree.command(name="unlockteam", description="Unlock a given leader's team.")
 async def unlockteam(interaction: discord.Interaction, member: discord.Member) -> None:
+    logger.command(interaction)
     await interaction.response.defer(ephemeral=True)  # Defer the response to get more time
     allowed_roles: list[int] = [ids[interaction.guild.id]["sancturary_keeper_role_id"], ids[interaction.guild.id]["event_luminary_role_id"], ids[interaction.guild.id]["sky_guardians_role_id"], ids[interaction.guild.id]["tech_oracle_role_id"]]
     if not any(role.id in allowed_roles for role in interaction.user.roles):
@@ -408,6 +415,7 @@ async def unlockteam(interaction: discord.Interaction, member: discord.Member) -
 # Music commands
 @client.tree.command(name="music_menu", description="Create a music player menu.")
 async def music_menu(interaction: discord.Interaction) -> None:
+    logger.command(interaction)
     await interaction.response.defer()
     allowed_roles: list[int] = [ids[interaction.guild.id]["sancturary_keeper_role_id"], ids[interaction.guild.id]["sky_guardians_role_id"], ids[interaction.guild.id]["tech_oracle_role_id"], ids[interaction.guild.id]["event_luminary_role_id"]]
     if not any(role.id in allowed_roles for role in interaction.user.roles):
@@ -603,7 +611,8 @@ async def on_command_error(ctx: commands.Context, error):
         await ctx.message.delete(delay=10)
     else:
         # Raise the error if it's not CommandNotFound
-        raise error
+        # raise error
+        logger.error(f"An error occurred: {error}")
 
 
 def main() -> None:

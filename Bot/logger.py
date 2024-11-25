@@ -1,13 +1,21 @@
 import discord
 from loguru import logger as lg
 import sys
+from typing import Union
 
 # Class to log messages
-class Logger:
+class Logger(object):
+    _instance: Union["Logger", bool] = False
+    
     def __init__(self):
-        """Create a new instance of the Logger class.
-        """
-        self.setup_logger()
+        """Create a new instance of the Logger class."""
+        # there can be only one instance of the logger, so there is no need to do anything here
+        pass
+    
+    def __new__(cls, *args, **kwargs) -> "Logger":
+        if not cls._instance:
+            cls._instance = super(Logger, cls).__new__(cls, *args, **kwargs)
+        return cls._instance
         
     # Function to setup the logger
     def setup_logger(self):
@@ -18,7 +26,6 @@ class Logger:
         lg.add("logs/debug.log", level="DEBUG", format=log_format, retention="4 days")
         lg.add("logs/info.log", level="INFO", format=log_format, retention="7 days")
         lg.add("logs/error.log", level="ERROR", format=log_format, retention="14 days")
-        
         lg.level("PRINT", no=9999, color="<green><b>")
 
 
@@ -167,3 +174,7 @@ class Logger:
             extra (dict, optional): Optional extra dict with whatever contect in needed.
         """
         self.log("ERROR", message, extra, depth=2)
+
+# Class to log messages
+logger = Logger()
+logger.setup_logger()
