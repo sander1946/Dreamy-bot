@@ -22,7 +22,7 @@ class Logger(object):
         """The function to setup the logger with different handlers."""
         log_format = "<fg #706d6a><b>{time:YYYY-MM-DD HH:mm:ss}</b></fg #706d6a> <level>{level: <8}</level> <fg #996c92>{file}.{function}:{line}</fg #996c92> <level>{message}</level> | <level>{extra}</level>"
         lg.remove(0)
-        lg.add(sys.stderr, level="WARNING", format=log_format, colorize=True)
+        lg.add(sys.stderr, level="SUCCESS", format=log_format, colorize=True)
         lg.add("logs/debug.log", level="DEBUG", format=log_format, retention="4 days")
         lg.add("logs/info.log", level="INFO", format=log_format, retention="7 days")
         lg.add("logs/error.log", level="ERROR", format=log_format, retention="14 days")
