@@ -3,7 +3,7 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ui import View, Select
 
-from functions import load_ids, create_connection, close_connection, get_accepted_rules, get_rule_channels, create_rule_channel, remove_rule_channel, set_accepted_rules
+from functions import load_ids, create_connection, close_connection, get_accepted_rules, get_rule_channels, create_rule_channel, remove_rule_channel, set_accepted_rules, get_rule_channel
 
 ids = load_ids()
 
@@ -50,6 +50,10 @@ class AccessManager(commands.Cog):
         current_channel = interaction.channel
         
         connection = create_connection("Server_data")
+        if get_rule_channel(connection, channel.id):
+            close_connection(connection)
+            await interaction.followup.send("The channel already has a rule gate set.", ephemeral=True)
+            return
         create_rule_channel(connection, channel.id, interaction.user.id)
         close_connection(connection)
         
@@ -93,6 +97,10 @@ class AccessManager(commands.Cog):
             return
         
         connection = create_connection("Server_data")
+        if not get_rule_channel(connection, channel.id):
+            close_connection(connection)
+            await interaction.followup.send("The channel does not have a rule gate set.", ephemeral=True)
+            return
         remove_rule_channel(connection, channel.id)
         close_connection(connection)
         
@@ -120,6 +128,13 @@ class PersistentAcceptRulesView(discord.ui.View):
         if not self.channel:
             print("[error][accessManager] Channel not found.")
             return
+        
+        connection = create_connection("Server_data")
+        if not get_rule_channel(connection, self.channel.id):
+            close_connection(connection)
+            await interaction.followup.send("The channel does not have a rule gate set.", ephemeral=True)
+            return
+        close_connection(connection)
         
         ignore_roles: list[int] = [ids[interaction.guild.id]["sancturary_keeper_role_id"], ids[interaction.guild.id]["event_luminary_role_id"], ids[interaction.guild.id]["sky_guardians_role_id"], ids[interaction.guild.id]["tech_oracle_role_id"]]
         if any(role.id in ignore_roles for role in interaction.user.roles):

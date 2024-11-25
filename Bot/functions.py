@@ -180,6 +180,13 @@ def get_rule_channels(connection: PooledMySQLConnection | MySQLConnectionAbstrac
         return result
     return None
 
+def get_rule_channel(connection: PooledMySQLConnection | MySQLConnectionAbstract, channel_id: int):
+    query = "SELECT * FROM rule_channels WHERE channel_id = %s"
+    result = select_query(connection, query, (channel_id,))
+    if result:
+        return result
+    return None
+
 def create_rule_channel(connection: PooledMySQLConnection | MySQLConnectionAbstract, channel_id: int,  creator_id: int):
     query = "INSERT INTO rule_channels (channel_id, creator_id) VALUES (%s, %s)"
     values = (channel_id, creator_id)
