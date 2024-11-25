@@ -64,3 +64,84 @@ class logger:
                     return lg.opt(depth=1).log("PRINT", message)
                 case _:
                     return lg.opt(depth=1).log("PRINT", message)
+
+    def debug(self, message: str, extra: dict[str: any] = None) -> None:
+        """The function to log debug messages.
+
+        Args:
+            message (str): The message to log
+            extra (dict, optional): Optional extra dict with whatever contect in needed.
+        """
+        self.log("DEBUG", message, extra)
+    
+    def info(self, message: str, extra: dict[str: any] = None) -> None:
+        """The function to log info messages.
+
+        Args:
+            message (str): The message to log
+            extra (dict, optional): Optional extra dict with whatever contect in needed.
+        """
+        self.log("INFO", message, extra)
+    
+    def success(self, message: str, extra: dict[str: any] = None) -> None:
+        """The function to log success messages.
+
+        Args:
+            message (str): The message to log
+            extra (dict, optional): Optional extra dict with whatever contect in needed.
+        """
+        self.log("SUCCESS", message, extra)
+    
+    def warning(self, message: str, extra: dict[str: any] = None) -> None:
+        """The function to log warning messages.
+
+        Args:
+            message (str): The message to log
+            extra (dict, optional): Optional extra dict with whatever contect in needed.
+        """
+        self.log("WARNING", message, extra)
+    
+    def error(self, message: str, extra: dict[str: any] = None) -> None:
+        """The function to log error messages.
+
+        Args:
+            message (str): The message to log
+            extra (dict, optional): Optional extra dict with whatever contect in needed.
+        """
+        self.log("ERROR", message, extra)
+    
+    def critical(self, message: str, extra: dict[str: any] = None) -> None:
+        """The function to log critical messages.
+
+        Args:
+            message (str): The message to log
+            extra (dict, optional): Optional extra dict with whatever contect in needed.
+        """
+        self.log("CRITICAL", message, extra)
+        
+    def print(self, message: str, extra: dict[str: any] = None) -> None:
+        """The function to log print messages.
+
+        Args:
+            message (str): The message to log
+            extra (dict, optional): Optional extra dict with whatever contect in needed.
+        """
+        self.log("PRINT", message, extra)
+        
+    def exception(self, message: str, extra: dict[str: any] = None) -> None:
+        """The function to log exception messages.
+
+        Args:
+            message (str): The message to log
+            extra (dict, optional): Optional extra dict with whatever contect in needed.
+        """
+        self.log("ERROR", message, extra)
+    
+    def traceback(self, message: str, extra: dict[str: any] = None) -> None:
+        """The function to log traceback messages.
+
+        Args:
+            message (str): The message to log
+            extra (dict, optional): Optional extra dict with whatever contect in needed.
+        """
+        self.log("ERROR", message, extra)
