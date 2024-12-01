@@ -175,7 +175,7 @@ class PersistentTicketView(discord.ui.View):
                 sky_guardians_role: discord.PermissionOverwrite(read_messages=True),
                 tech_oracle_role: discord.PermissionOverwrite(read_messages=True, manage_messages=True, manage_channels=True)
             }
-            ticket_name = f"Other-{interaction.user.display_name}'s-{str(time.time_ns())[-6:]}"
+            ticket_name = f"Other-{interaction.user.display_name}-{str(time.time_ns())[-6:]}"
             ticket_channel = await interaction.guild.create_text_channel(name=ticket_name, category=support_category, overwrites=overwrites)
             
             logger.debug(f"Ticket created for user {interaction.user.name} in channel {ticket_channel.name}", {"ticket_type": "other", "channel_id": ticket_channel.id})
