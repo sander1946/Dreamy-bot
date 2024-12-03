@@ -31,6 +31,11 @@ class AccessManager(commands.Cog):
     async def createRuleGate(self, interaction: discord.Interaction, channel: discord.abc.GuildChannel) -> None:
         logger.command(interaction)
         await interaction.response.defer(ephemeral=True)  # Defer the response to get more time
+        
+        if channel.id != 1252671211255762976:
+            await interaction.followup.send("This command can only be used in the rules channel.", ephemeral=True)
+            return
+        
         if channel.type == discord.ChannelType.voice:
             logger.warning("The channel can't be a voice channel.")
             await interaction.followup.send(content="The channel can't be a voice channel.", ephemeral=True)
@@ -79,6 +84,64 @@ class AccessManager(commands.Cog):
         
         await interaction.followup.send("The rules have been added to the channel.", ephemeral=True)
         await current_channel.send("", view=PersistentAcceptRulesView(self.client, channel))
+    
+    @app_commands.command(name="resetrulegate", description="Resets the access barier for a channel, this also disables any previous accept rules buttons.")
+    @is_eventlumi()
+    async def resetRuleGate(self, interaction: discord.Interaction, channel: discord.abc.GuildChannel) -> None:
+        logger.command(interaction)
+        await interaction.response.defer(ephemeral=True)  # Defer the response to get more time
+        
+        if channel.id != 1252671211255762976:
+            await interaction.followup.send("This command can only be used in the rules channel.", ephemeral=True)
+            return
+        
+        if channel.type == discord.ChannelType.voice:
+            logger.warning("The channel can't be a voice channel.")
+            await interaction.followup.send(content="The channel can't be a voice channel.", ephemeral=True)
+            return
+        
+        event_luminary_role = interaction.guild.get_role(ids[interaction.guild.id]["event_luminary_role_id"])
+        if not event_luminary_role:
+            logger.critical("Event Luminary role not found. Please provide a valid role ID.")
+            await interaction.followup.send("```ansi\n[2;31mEvent Luminary role not found. Please provide a valid role ID.```", ephemeral=True)
+            return
+        
+        sky_guardians_role = interaction.guild.get_role(ids[interaction.guild.id]["sky_guardians_role_id"])
+        if not sky_guardians_role:
+            logger.critical("Sky Guardians role not found. Please provide a valid role ID.")
+            await interaction.followup.send("```ansi\n[2;31mSky Guardians role not found. Please provide a valid role ID.```", ephemeral=True)
+            return
+        
+        tech_oracle_role = interaction.guild.get_role(ids[interaction.guild.id]["tech_oracle_role_id"])
+        if not tech_oracle_role:
+            logger.critical("Tech Oracle role not found. Please provide a valid role ID.")
+            await interaction.followup.send("```ansi\n[2;31mTech Oracle role not found. Please provide a valid role ID.```", ephemeral=True)
+            return
+        
+        current_channel = interaction.channel
+        
+        connection = create_connection("Server_data")
+        if not get_rule_channel(connection, channel.id):
+            close_connection(connection)
+            logger.warning("The channel does not have a rule gate set.")
+            await interaction.followup.send("The channel does not have a rule gate set.", ephemeral=True)
+            return
+        remove_rule_channel(connection, channel.id)
+        close_connection(connection)
+        
+        # Set the permissions for the channel allow only the read_messages permission for the default role
+        overwrites = {
+            interaction.guild.default_role: discord.PermissionOverwrite(read_messages=True, add_reactions=False, send_messages=False),
+            event_luminary_role: discord.PermissionOverwrite(read_messages=True, add_reactions=True, send_messages=True, manage_messages=True, manage_channels=True, manage_threads=True),
+            sky_guardians_role: discord.PermissionOverwrite(read_messages=True, add_reactions=True, send_messages=True, manage_messages=True, manage_channels=True, manage_threads=True),
+            tech_oracle_role: discord.PermissionOverwrite(read_messages=True, add_reactions=True, send_messages=True, read_message_history=True, manage_messages=True, manage_channels=True, manage_permissions=True, administrator=True),
+        }
+        
+        channel = await channel.edit(overwrites=overwrites)
+        
+        logger.info("The rule gate has been reset, no one can accept the rules for now", {"channel_id": channel.id, "channel_name": channel.name, "guild_id": interaction.guild.id, "guild_name": interaction.guild.name})
+        
+        await interaction.followup.send("The rule gate has been reset, no one can accept the rules for now.", ephemeral=True)
 
     @app_commands.command(name="removerulegate", description="Removes a channels post and reaction access barier.")
     @is_eventlumi()
@@ -155,7 +218,7 @@ class PersistentAcceptRulesView(discord.ui.View):
         if not get_rule_channel(connection, self.channel.id):
             close_connection(connection)
             logger.warning("The channel does not have a rule gate set.")
-            await interaction.followup.send("The channel does not have a rule gate set.", ephemeral=True)
+            await interaction.followup.send("The rules are not currently enabled", ephemeral=True)
             return
         close_connection(connection)
         

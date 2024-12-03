@@ -38,42 +38,25 @@ class Logger(object):
             message (str): The message to log
             extra (dict, optional): Optional extra dict with whatever contect in needed.
         """
-        if extra:
-            match level:
-                case "DEBUG":
-                    return lg.opt(depth=depth).debug(message, extra=extra)
-                case "INFO":
-                    return lg.opt(depth=depth).info(message, extra=extra)
-                case "SUCCESS":
-                    return lg.opt(depth=depth).success(message, extra=extra)
-                case "WARNING":
-                    return lg.opt(depth=depth).warning(message, extra=extra)
-                case "ERROR":
-                    return lg.opt(depth=depth).error(message, extra=extra)
-                case "CRITICAL":
-                    return lg.opt(depth=depth).critical(message, extra=extra)
-                case "PRINT":
-                    return lg.opt(depth=depth).log("PRINT", message, extra)
-                case _:
-                    return lg.opt(depth=depth).log("PRINT", message, extra)
-        else:
-            match level:
-                case "DEBUG":
-                    return lg.opt(depth=depth).debug(message)
-                case "INFO":
-                    return lg.opt(depth=depth).info(message)
-                case "SUCCESS":
-                    return lg.opt(depth=depth).success(message)
-                case "WARNING":
-                    return lg.opt(depth=depth).warning(message)
-                case "ERROR":
-                    return lg.opt(depth=depth).error(message)
-                case "CRITICAL":
-                    return lg.opt(depth=depth).critical(message)
-                case "PRINT":
-                    return lg.opt(depth=depth).log("PRINT", message)
-                case _:
-                    return lg.opt(depth=depth).log("PRINT", message)
+        # if extra:
+        match level:
+            case "DEBUG":
+                return lg.opt(depth=depth).debug(message, extra)
+            case "INFO":
+                return lg.opt(depth=depth).info(message, extra)
+            case "SUCCESS":
+                return lg.opt(depth=depth).success(message, extra)
+            case "WARNING":
+                return lg.opt(depth=depth).warning(message, extra)
+            case "ERROR":
+                return lg.opt(depth=depth).error(message, extra)
+            case "CRITICAL":
+                return lg.opt(depth=depth).critical(message, extra)
+            case "PRINT":
+                return lg.opt(depth=depth).log("PRINT", message, extra)
+            case _:
+                return lg.opt(depth=depth).log("PRINT", message, extra)
+    
     
     def command(self, interaction: discord.Interaction, extra: dict[str: any] = None) -> None:
         """The function to log command messages.
