@@ -24,8 +24,8 @@ class PersistentTicketView(discord.ui.View):
             discord.SelectOption(label="Inappropriate Behavior", value="01", emoji="🚫", description="Report someone who is behaving inappropriately"),
             discord.SelectOption(label="Discord Server Issue", value="02", emoji="🛠️", description="Report a bug or issue with the discord server"),
             discord.SelectOption(label="Removal of a Post", value="04", emoji="🗑", description="Have an old Dreamy Journal that you want to delete?"),
-            discord.SelectOption(label="Custom Role Update or Request", value="06", emoji="🔄", description="If you want or have a Custom Role and you want to change or create it"),
-            discord.SelectOption(label="Bot Issue", value="03", emoji="🤖", description="Report an bug or zcmdissue with the Dreamy Assistant bot"),
+            discord.SelectOption(label="Custom Role Update or Request", value="06", emoji="🔄", description="Want to change or create you're custom role"),
+            discord.SelectOption(label="Bot Issue", value="03", emoji="🤖", description="Report an bug or issue with the Dreamy Assistant bot"),
             discord.SelectOption(label="Other Subject", value="05", emoji="❓", description="Have any other subjects you want to talk about?")
         ])
         select.callback = self.select_callback
