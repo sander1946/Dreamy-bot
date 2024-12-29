@@ -24,7 +24,8 @@ class PersistentTicketView(discord.ui.View):
             discord.SelectOption(label="Inappropriate Behavior", value="01", emoji="🚫", description="Report someone who is behaving inappropriately"),
             discord.SelectOption(label="Discord Server Issue", value="02", emoji="🛠️", description="Report a bug or issue with the discord server"),
             discord.SelectOption(label="Removal of a Post", value="04", emoji="🗑", description="Have an old Dreamy Journal that you want to delete?"),
-            discord.SelectOption(label="Bot Issue", value="03", emoji="🤖", description="Report an bug or issue with the Dreamy Assistant bot"),
+            discord.SelectOption(label="Custom Role Update or Request", value="06", emoji="🔄", description="If you want or have a Custom Role and you want to change or create it"),
+            discord.SelectOption(label="Bot Issue", value="03", emoji="🤖", description="Report an bug or zcmdissue with the Dreamy Assistant bot"),
             discord.SelectOption(label="Other Subject", value="05", emoji="❓", description="Have any other subjects you want to talk about?")
         ])
         select.callback = self.select_callback
@@ -191,7 +192,45 @@ class PersistentTicketView(discord.ui.View):
             await ticket_channel.send(f"\n{sky_guardians_role.mention}, {interaction.user.mention} has an general issue or question.\nPlease wait until a Sky Guardian is on the case <3\nIn the meantime, please provide the context of the issue or question")
             
             await owner.send(f"A general ticket has been created by {interaction.user.mention}: {ticket_url}")
+        
+        elif interaction.data["values"][0] == "06": # Custom Role Update
+            # get the admin user to ping them
+            owner = await self.client.fetch_user(ids[interaction.guild.id]["owner_id"])
+            if not owner:
+                logger.error("Owner was not found. Please provide a valid user ID.")
+                await interaction.followup.send("```ansi\n[2;31mowner was not found. Please provide a valid user ID.```", ephemeral=True)
+                return
+            admin = await self.client.fetch_user(485157849211863040) # TODO: add the admin ID to the database
+            if not admin:
+                logger.error("Admin was not found. Please provide a valid user ID.")
+                await interaction.followup.send("```ansi\n[2;31mAdmin was not found. Please provide a valid user ID.```", ephemeral=True)
+                return
+            logger.info(f"Ticket created for user {interaction.user.name}", {"ticket_type": "Role Update"})
+            overwrites = { # Overwrites for the ticket channel, no need for Sky Guardians, only Tech Oracle, author and admins
+                interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                interaction.guild.me: discord.PermissionOverwrite(read_messages=True),
+                interaction.user: discord.PermissionOverwrite(read_messages=True),
+                owner: discord.PermissionOverwrite(read_messages=True),
+                admin: discord.PermissionOverwrite(read_messages=True),
+                tech_oracle_role: discord.PermissionOverwrite(read_messages=True, manage_messages=True, manage_channels=True)
+            }
+            ticket_name = f"Role-{interaction.user.display_name}-{str(time.time_ns())[-6:]}"
+            ticket_channel = await interaction.guild.create_text_channel(name=ticket_name, category=support_category, overwrites=overwrites)
             
+            logger.debug(f"Ticket created for user {interaction.user.name} in channel {ticket_channel.name}", {"ticket_type": "Role Update", "channel_id": ticket_channel.id})
+            
+            await interaction.followup.send("A ticket for Role Update has been created!", ephemeral=True)
+            
+            ticket_url = f"https://discord.com/channels/{interaction.guild.id}/{ticket_channel.id}"
+            await send_message_to_user(self.client, interaction.user.id, f"Your ticket has been created: {ticket_url}")
+            
+            await ticket_channel.send("# Role Update\nAfter you are done, you can close this ticket via the button below!", view=PersistentCloseTicketView(self.client))
+            
+            # Notify user and ping Sky Guardians role
+            await ticket_channel.send(f"\n{owner.mention} & {admin.mention}, {interaction.user.mention} would like to change there Custom Role.\nPlease wait until either of them is on the case <3\nIn the meantime, please provide what you would like your Custom Role to be")
+            
+            await owner.send(f"A general ticket has been created by {interaction.user.mention}: {ticket_url}")
+        
         else: # Invalid selection
             logger.warning("Invalid selection", {"ticket_type": "invalid", "selection": interaction.data["values"][0]})
             await interaction.followup.send("Invalid selection", ephemeral=True)
