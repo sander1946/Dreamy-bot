@@ -14,7 +14,7 @@ class BaseView(discord.ui.View):
     def __init__(self, user: discord.User | discord.Member = None, timeout: float = 60.0, allow_others = False) -> None:
         super().__init__(timeout=timeout)
         # We set the user who invoked the command as the user who can interact with the view
-        if allow_others == False & user is None:
+        if allow_others == False and user is None:
             raise ValueError("The `user` argument must be provided if `allow_others` is set to False.")
         self.user = user
         self.allow_others = allow_others
