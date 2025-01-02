@@ -16,6 +16,7 @@ import json
 
 
 # local imports
+from cogs.utils.BaseView import BaseView
 from functions import load_ids, save_transcript, get_rule_channels, create_connection, close_connection
 from ticketMenu import PersistentTicketView, PersistentCloseTicketView
 from musicMenu import PersistentMusicView
@@ -93,7 +94,6 @@ async def on_ready() -> None:
     await client.tree.sync()  # Sync slash commands
     logger.log("PRINT", f"Bot is ready as {client.user}")
 
-
 @client.tree.command(name="help", description="Lists all available commands.")
 async def help_command(interaction: discord.Interaction):
     logger.command(interaction)
@@ -151,7 +151,7 @@ async def force_close_ticket(interaction: discord.Interaction) -> None:
         ])
         
         select.callback = ticket_select_callback
-        view = View(timeout=60)
+        view = BaseView(timeout=60, allow_others=False)
         view.add_item(select)
         await interaction.response.send_message("Do you really want to close the ticket?", view=view, ephemeral=True, delete_after=60)
     

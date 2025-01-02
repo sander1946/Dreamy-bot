@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 import os
 
 # local imports
+from cogs.utils.BaseView import BaseView
 from cogs.utils.BaseModal import BaseModal
 from functions import load_ids, get_video_urls
 from logger import logger
@@ -40,9 +41,9 @@ youtube_watch_url: str = youtube_base_url + 'watch?v='
 ytdl: yt_dlp.YoutubeDL = yt_dlp.YoutubeDL(yt_dlp_options)
 
 
-class PersistentMusicView(discord.ui.View):
+class PersistentMusicView(BaseView):
     def __init__(self, client: commands.Bot):
-        super().__init__(timeout=None)  
+        super().__init__(timeout=None, allow_others=True)  
         self.add_item(discord.ui.Button(emoji="<:Back:1306675066456772608>", style=discord.ButtonStyle.primary, custom_id="back", row=1))
         self.children[-1].callback = self.back_callback
         self.add_item(discord.ui.Button(emoji="<:Play:1306675076183359599>", style=discord.ButtonStyle.primary, custom_id="resume", row=1))

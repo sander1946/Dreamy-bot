@@ -3,6 +3,7 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ui import View, Select
 
+from cogs.utils.BaseView import BaseView
 from functions import load_ids, create_connection, close_connection, get_accepted_rules, get_rule_channels, create_rule_channel, remove_rule_channel, set_accepted_rules, get_rule_channel
 
 # local imports
@@ -198,9 +199,9 @@ class AccessManager(commands.Cog):
         await interaction.followup.send("The rules have been removed from the channel.", ephemeral=True)
 
 
-class PersistentAcceptRulesView(discord.ui.View):
+class PersistentAcceptRulesView(BaseView):
     def __init__(self, client: commands.Bot, channel: discord.abc.GuildChannel) -> None:
-        super().__init__(timeout=None)  
+        super().__init__(timeout=None, allow_others=True)  
         self.add_item(discord.ui.Button(label="📜 I have read the rules", style=discord.ButtonStyle.blurple, custom_id=f"Accepted_rules_{channel.id}"))
         self.children[-1].callback = self.accept_callback
         self.client = client
