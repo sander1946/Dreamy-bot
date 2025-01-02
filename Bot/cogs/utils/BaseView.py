@@ -11,15 +11,20 @@ class BaseView(discord.ui.View):
     interaction: discord.Interaction | None = None
     message: discord.Message | None = None
 
-    def __init__(self, user: discord.User | discord.Member, timeout: float = 60.0, **kwargs: typing.Any) -> None:
+    def __init__(self, user: discord.User | discord.Member = None, timeout: float = 60.0, allow_others = False) -> None:
         super().__init__(timeout=timeout)
         # We set the user who invoked the command as the user who can interact with the view
+        if allow_others == False & user is None:
+            raise ValueError("The `user` argument must be provided if `allow_others` is set to False.")
         self.user = user
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+        self.allow_others = allow_others
 
     # make sure that the view only processes interactions from the user who invoked the command
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if self.allow_others: # if we want to allow others to interact with the view
+            return True
+        
+        # if the interaction is not from the user who invoked the command, notify the user that they cannot interact with the view
         if interaction.user.id != self.user.id:
             await interaction.response.send_message(
                 "You cannot interact with this view.", ephemeral=True
@@ -68,5 +73,4 @@ class BaseView(discord.ui.View):
         # disable all components
         self._disable_all()
         # edit the message with the new view
-        await self.message.delete()
-        # await self._edit(view=self)
+        await self._edit(view=self)
