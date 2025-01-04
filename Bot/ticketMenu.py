@@ -228,7 +228,7 @@ class PersistentTicketView(BaseView):
             await ticket_channel.send("# Role Update\nAfter you are done, you can close this ticket via the button below!", view=PersistentCloseTicketView(self.client))
             
             # Notify user and ping Sky Guardians role
-            await ticket_channel.send(f"\n{owner.mention} & {admin.mention}, {interaction.user.mention} would like to change there Custom Role.\nPlease wait until either of them is on the case <3\nIn the meantime, please provide what you would like your Custom Role to be")
+            await ticket_channel.send(f"\n{owner.mention} & {admin.mention}, {interaction.user.mention} would like to change there Custom Role.\nPlease wait until either of them is on the case <3\nIn the meantime, please provide what you would like your Custom Role to be. You can customize the following three things: The color or the role (an rgb or hex value), The name of the role, and the icon or the role (an image or an emoji).")
             
             await owner.send(f"A general ticket has been created by {interaction.user.mention}: {ticket_url}")
         
