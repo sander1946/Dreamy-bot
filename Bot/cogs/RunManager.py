@@ -2,7 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from functions import load_ids
+from cogs.utils.functions import load_ids
 
 # local imports
 from logger import logger

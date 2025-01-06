@@ -14,7 +14,7 @@ import os
 # local imports
 from cogs.utils.BaseView import BaseView
 from cogs.utils.BaseModal import BaseModal
-from functions import load_ids, get_video_urls
+from cogs.utils.functions import load_ids, get_video_urls
 from logger import logger
 
 # 3rd party imports
