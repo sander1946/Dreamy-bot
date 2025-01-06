@@ -7,15 +7,14 @@ from discord.ui import View, Select
 import time
 
 # local imports
-from cogs.utils.BaseView import BaseView
 from functions import send_message_to_user, create_connection, save_ticket_to_db, load_ticket_from_db, close_connection, load_ids, delete_ticket_from_db, save_transcript
 from logger import logger
 
 ids: dict[int, dict[str, int]] = load_ids()
 
-class PersistentTicketView(BaseView):
+class PersistentTicketView(discord.ui.View):
     def __init__(self, client: commands.Bot):
-        super().__init__(timeout=None, allow_others=True)  
+        super().__init__(timeout=None)  
         self.add_item(discord.ui.Button(label="📬 Create a Ticket", style=discord.ButtonStyle.green, custom_id="ticket_menu"))
         self.children[-1].callback = self.ticket_callback
         self.client = client
@@ -30,7 +29,7 @@ class PersistentTicketView(BaseView):
             discord.SelectOption(label="Other Subject", value="05", emoji="❓", description="Have any other subjects you want to talk about?")
         ])
         select.callback = self.select_callback
-        view = BaseView(timeout=60, allow_others=False)
+        view = View(timeout=60)
         view.add_item(select)
         await interaction.response.send_message("Select the type of ticket you would like to create.", view=view, ephemeral=True, delete_after=60)
     
@@ -240,9 +239,9 @@ class PersistentTicketView(BaseView):
         save_ticket_to_db(connection, interaction.user.id, ticket_channel.id)
         close_connection(connection)
 
-class PersistentCloseTicketView(BaseView):
+class PersistentCloseTicketView(discord.ui.View):
     def __init__(self, client):
-        super().__init__(timeout=None, allow_others=True)  
+        super().__init__(timeout=None)  
         self.add_item(discord.ui.Button(label="Close Ticket", style=discord.ButtonStyle.red, custom_id="ticket_close_menu"))
         self.children[-1].callback = self.close_callback
         self.client = client
@@ -255,7 +254,7 @@ class PersistentCloseTicketView(BaseView):
         ])
         
         select.callback = self.select_callback
-        view = BaseView(timeout=60, allow_others=False)
+        view = View(timeout=60)
         view.add_item(select)
         await interaction.response.send_message("Do you really want to close the ticket?", view=view, ephemeral=True, delete_after=60)
 
