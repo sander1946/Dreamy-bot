@@ -4,7 +4,7 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ui import View, Select
 
-from cogs.utils.functions import load_ids, create_connection, close_connection, get_accepted_rules, get_rule_channels, create_rule_channel, remove_rule_channel, set_accepted_rules, get_rule_channel
+from functions import load_ids, create_connection, close_connection, get_accepted_rules, get_rule_channels, create_rule_channel, remove_rule_channel, set_accepted_rules, get_rule_channel
 
 # local imports
 from logger import logger

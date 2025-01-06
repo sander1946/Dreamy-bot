@@ -73,7 +73,7 @@ async def send_message_to_user(client: commands.Bot, user_id: int, message: str)
 async def save_transcript(channel: discord.TextChannel, ticket_logs: str) -> str:
     logger.info(f"Saving transcript for ticket {channel.name}")
     _dir = os.path.dirname(__file__)
-    path = f"{_dir}/assets/tickets/ticket-{channel.name}.txt"
+    path = f"{_dir}/tickets/ticket-{channel.name}.txt"
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
     try:

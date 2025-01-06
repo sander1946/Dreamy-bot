@@ -8,7 +8,7 @@ import time
 
 # local imports
 from cogs.utils.BaseView import BaseView
-from cogs.utils.functions import send_message_to_user, create_connection, save_ticket_to_db, load_ticket_from_db, close_connection, load_ids, delete_ticket_from_db, save_transcript
+from functions import send_message_to_user, create_connection, save_ticket_to_db, load_ticket_from_db, close_connection, load_ids, delete_ticket_from_db, save_transcript
 from logger import logger
 
 ids: dict[int, dict[str, int]] = load_ids()

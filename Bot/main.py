@@ -17,9 +17,9 @@ import json
 
 # local imports
 from cogs.utils.BaseView import BaseView
-from cogs.utils.functions import load_ids, save_transcript, get_rule_channels, create_connection, close_connection
-from cogs.views.ticketMenu import PersistentTicketView, PersistentCloseTicketView
-from cogs.views.musicMenu import PersistentMusicView
+from functions import load_ids, save_transcript, get_rule_channels, create_connection, close_connection
+from ticketMenu import PersistentTicketView, PersistentCloseTicketView
+from musicMenu import PersistentMusicView
 from cogs.RunManager import RunManager
 from cogs.AccessManager import AccessManager, PersistentAcceptRulesView
 from logger import logger
@@ -53,7 +53,7 @@ client = commands.Bot(command_prefix="!", intents=intents)
 
 # load the command whitelist
 dir = os.path.dirname(__file__)
-with open(f"{dir}/assets/whitelist.json", "r") as file:
+with open(f"{dir}/whitelist.json", "r") as file:
     command_whitelist = json.load(file)["no_error_commands"]
 
 
