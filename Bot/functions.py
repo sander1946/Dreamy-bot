@@ -169,6 +169,24 @@ def close_connection(connection: PooledMySQLConnection | MySQLConnectionAbstract
         logger.debug("Database connection closed.")
 
 
+def get_guildSettings(connection: PooledMySQLConnection | MySQLConnectionAbstract, guild_id: int):
+    logger.debug(f"Getting guild settings from the database: {guild_id}")
+    query = "SELECT * FROM guilds WHERE server_id = %s"
+    result = select_query(connection, query, (guild_id,))
+    if result:
+        return result[0]
+    logger.warning(f"No guild settings found in the database for guild {guild_id}")
+    return None
+
+
+def set_guildSettings(connection: PooledMySQLConnection | MySQLConnectionAbstract, guild_id: int, owner_id: int, sancturary_keeper_role_id: int, sky_guardians_role_id: int, tech_oracle_role_id: int, event_luminary_role_id: int, assistaint_role_id: int, support_category_id: int, general_category_id: int, music_voice_id: int, bot_channel_id: int, music_channel_id: int, ticket_channel_id: int, ticket_log_channel_id: int):
+    logger.info(f"Setting guild settings in the database: {guild_id}")
+    query = "INSERT INTO guilds (server_id, owner_id, sancturary_keeper_role_id, sky_guardians_role_id, tech_oracle_role_id, event_luminary_role_id, assistaint_role_id, support_category_id, general_category_id, music_voice_id, bot_channel_id, music_channel_id, ticket_channel_id, ticket_log_channel_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+    values = (guild_id, owner_id, sancturary_keeper_role_id, sky_guardians_role_id, tech_oracle_role_id, event_luminary_role_id, assistaint_role_id, support_category_id, general_category_id, music_voice_id, bot_channel_id, music_channel_id, ticket_channel_id, ticket_log_channel_id)
+    insert_query(connection, query, values)
+    
+
+
 def save_ticket_to_db(connection: PooledMySQLConnection | MySQLConnectionAbstract, user_id: int, channel_id: int):
     logger.info(f"Saving ticket to the database: {user_id}, {channel_id}")
     query = "INSERT INTO open_tickets (user_id, channel_id) VALUES (%s, %s)"
