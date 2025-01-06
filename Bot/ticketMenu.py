@@ -7,7 +7,7 @@ from discord.ui import View, Select
 import time
 
 # local imports
-from functions import send_message_to_user, create_connection, save_ticket_to_db, load_ticket_from_db, close_connection, load_ids, delete_ticket_from_db, save_transcript
+from functions import send_message_to_user, create_connection, save_ticket_to_db, load_ticket_from_db, close_connection, load_ids, delete_ticket_from_db, save_transcript, zip_files
 from logger import logger
 
 ids: dict[int, dict[str, int]] = load_ids()
@@ -291,10 +291,13 @@ class PersistentCloseTicketView(discord.ui.View):
                 
                 ticket_logs = ""
                 path = await save_transcript(interaction.channel, ticket_logs)
+                attatchments_path = await zip_files(interaction.channel)
 
                 ticket_logs_channel = self.client.get_channel(ids[interaction.guild.id]["ticket_log_channel_id"])
                 if ticket_logs_channel:
                     await ticket_logs_channel.send(f"Transcript for {interaction.channel.name}:\nThe ticket for {user.name} a.k.a {user.display_name} has been closed by {interaction.user.name} a.k.a {interaction.user.display_name}", file=discord.File(path))
+                    if attatchments_path:
+                        await ticket_logs_channel.send(file=discord.File(attatchments_path))
                 else:
                     logger.error("Ticket logs channel not found. Please provide a valid channel ID.")
                 logger.info(f"Ticket closed by user {interaction.user.name} in channel {interaction.channel.name}", {"ticket_type": "close", "channel_id": interaction.channel.id})
@@ -303,8 +306,10 @@ class PersistentCloseTicketView(discord.ui.View):
                 connection = create_connection("Server_data")
                 delete_ticket_from_db(connection, interaction.channel.id)
                 close_connection(connection)
-                await send_message_to_user(self.client, user_id, "Your ticket has been closed successfully. The Transcript of the ticket has been saved.")
+                await user.send("Your ticket has been closed successfully. The Transcript of the ticket has been saved.")
                 await user.send(f"Transcript for {interaction.channel.name}:", file=discord.File(path))
+                if attatchments_path: 
+                    await user.send(file=discord.File(attatchments_path))
             else:
                 logger.error("User does not have permission to close this ticket", {"ticket_type": "close", "user_id": interaction.user.id, "channel_id": interaction.channel.name})
                 await interaction.followup.send("You do not have permission to use this command.", ephemeral=True)

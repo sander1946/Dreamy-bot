@@ -13,6 +13,7 @@ from mysql.connector import Error
 from mysql.connector.abstracts import MySQLConnectionAbstract
 from mysql.connector.pooling import PooledMySQLConnection
 import yt_dlp
+import zipfile
 
 # local imports
 from logger import logger
@@ -73,7 +74,7 @@ async def send_message_to_user(client: commands.Bot, user_id: int, message: str)
 async def save_transcript(channel: discord.TextChannel, ticket_logs: str) -> str:
     logger.info(f"Saving transcript for ticket {channel.name}")
     _dir = os.path.dirname(__file__)
-    path = f"{_dir}/tickets/ticket-{channel.name}.txt"
+    path = f"{_dir}/tickets/{channel.name}/transcript-{channel.name}.txt"
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
     try:
@@ -82,6 +83,10 @@ async def save_transcript(channel: discord.TextChannel, ticket_logs: str) -> str
             logger.info(f"Writing transcript for ticket {channel.name}")
             async for message in channel.history(limit=None):
                 # Append the message with the author's name to the logs
+                if message.attachments:
+                    for attachment in message.attachments:
+                        ticket_logs = f"       {attachment.filename}\n" + ticket_logs
+                    ticket_logs = "    Attached attachment(s):\n"  + ticket_logs
                 ticket_logs = f"{message.author.name}: {message.content}\n" + ticket_logs
             ticket_logs = f"Transcript for {channel.name}:\n" + "```\n" + ticket_logs + "```"
             f.write(ticket_logs)
@@ -89,6 +94,59 @@ async def save_transcript(channel: discord.TextChannel, ticket_logs: str) -> str
     except Exception as e:
         logger.critical(f"Error saving transcript for {channel.name}: {e}")
 
+
+async def save_attachments(channel: discord.TextChannel) -> str:
+    logger.info(f"Saving attachments for ticket {channel.name}")
+    _dir = os.path.dirname(__file__)
+    path = f"{_dir}/tickets/{channel.name}/"
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+
+    attachments = [] # List to store the file paths of the attachments
+    try:
+        async for message in channel.history(limit=None):
+            for attachment in message.attachments:
+                file_path = f"{path}/{attachment.filename}"
+                while os.path.exists(file_path): # If the file already exists, add a number to the file name
+                    if file_path[:-4].endswith(")"): # If the file name already has a number in brackets (this only works on files with 3 character extensions)
+                        extension = file_path[-4:]
+                        file_path = file_path[:-5] # Remove the number and brackets
+                        number = int(file_path[-1])
+                        number += 1
+                        file_path = file_path[:-1]
+                        file_path = f"{file_path}{number}){extension}"
+                    else:
+                        file_path = f"{file_path[:-4]} (1){file_path[-4:]}"
+                await attachment.save(file_path)
+                attachments.append(file_path)
+        return attachments # Return the list of file paths
+    except Exception as e: 
+        logger.critical(f"Error saving attachments for {channel.name}: {e}")
+
+
+async def zip_files(channel: discord.TextChannel) -> str:
+    logger.info(f"Zipping files for ticket {channel.name}")
+    _dir = os.path.dirname(__file__)
+    path = f"{_dir}/tickets/{channel.name}/"
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    filepaths = await save_attachments(channel)
+    try:
+        if not filepaths: # If there are no attachments
+            return None
+        if len(filepaths) == 0: # if there are no attachments
+            return None
+        if len(filepaths) == 1: # If there is only one attachment, send only the attachment
+            return filepaths[0]
+        
+        # Zip the files
+        zip_path = f"{path}/attachments-{channel.name}.zip"
+        with zipfile.ZipFile(zip_path, "w") as zipf:
+            for file in filepaths:
+                zipf.write(file, os.path.basename(file))
+
+        return zip_path
+    except Exception as e:
+        logger.critical(f"Error zipping files for {channel.name}: {e}")
+    
 
 # Function to create MySQL database connection
 def create_connection(database_name: str) -> mysql.connector.connection.MySQLConnection:
