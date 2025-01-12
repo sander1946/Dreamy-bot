@@ -68,7 +68,7 @@ class PersistentTicketView(discord.ui.View):
                 interaction.guild.me: discord.PermissionOverwrite(read_messages=True),
                 interaction.user: discord.PermissionOverwrite(read_messages=True),
                 sky_guardians_role: discord.PermissionOverwrite(read_messages=True),
-                tech_oracle_role: discord.PermissionOverwrite(read_messages=True, manage_messages=True, manage_channels=True)
+                tech_oracle_role: discord.PermissionOverwrite(read_messages=True, add_reactions=True, send_messages=True, read_message_history=True, manage_messages=True, manage_channels=True, manage_permissions=True, administrator=True)
             }
             
             ticket_name = f"User-Report-{interaction.user.display_name}-{str(time.time_ns())[-6:]}"
@@ -95,7 +95,7 @@ class PersistentTicketView(discord.ui.View):
                 interaction.guild.me: discord.PermissionOverwrite(read_messages=True),
                 interaction.user: discord.PermissionOverwrite(read_messages=True),
                 sky_guardians_role: discord.PermissionOverwrite(read_messages=True),
-                tech_oracle_role: discord.PermissionOverwrite(read_messages=True, manage_messages=True, manage_channels=True)
+                tech_oracle_role: discord.PermissionOverwrite(read_messages=True, add_reactions=True, send_messages=True, read_message_history=True, manage_messages=True, manage_channels=True, manage_permissions=True, administrator=True)
             }
             
             ticket_name = f"Server-Issue-{interaction.user.display_name}-{str(time.time_ns())[-6:]}"
@@ -122,7 +122,7 @@ class PersistentTicketView(discord.ui.View):
                 interaction.guild.me: discord.PermissionOverwrite(read_messages=True),
                 interaction.user: discord.PermissionOverwrite(read_messages=True),
                 sky_guardians_role: discord.PermissionOverwrite(read_messages=False),
-                tech_oracle_role: discord.PermissionOverwrite(read_messages=True, manage_messages=True, manage_channels=True)
+                tech_oracle_role: discord.PermissionOverwrite(read_messages=True, add_reactions=True, send_messages=True, read_message_history=True, manage_messages=True, manage_channels=True, manage_permissions=True, administrator=True)
             }
             ticket_name = f"Bot-Issue-{interaction.user.display_name}-{str(time.time_ns())[-6:]}"
             ticket_channel = await interaction.guild.create_text_channel(name=ticket_name, category=support_category, overwrites=overwrites)
@@ -148,7 +148,7 @@ class PersistentTicketView(discord.ui.View):
                 interaction.guild.me: discord.PermissionOverwrite(read_messages=True),
                 interaction.user: discord.PermissionOverwrite(read_messages=True),
                 sky_guardians_role: discord.PermissionOverwrite(read_messages=True),
-                tech_oracle_role: discord.PermissionOverwrite(read_messages=True, manage_messages=True, manage_channels=True)
+                tech_oracle_role: discord.PermissionOverwrite(read_messages=True, add_reactions=True, send_messages=True, read_message_history=True, manage_messages=True, manage_channels=True, manage_permissions=True, administrator=True)
             }
             ticket_name = f"Removal-request-{interaction.user.display_name}-{str(time.time_ns())[-6:]}"
             ticket_channel = await interaction.guild.create_text_channel(name=ticket_name, category=support_category, overwrites=overwrites)
@@ -174,7 +174,7 @@ class PersistentTicketView(discord.ui.View):
                 interaction.guild.me: discord.PermissionOverwrite(read_messages=True),
                 interaction.user: discord.PermissionOverwrite(read_messages=True),
                 sky_guardians_role: discord.PermissionOverwrite(read_messages=True),
-                tech_oracle_role: discord.PermissionOverwrite(read_messages=True, manage_messages=True, manage_channels=True)
+                tech_oracle_role: discord.PermissionOverwrite(read_messages=True, add_reactions=True, send_messages=True, read_message_history=True, manage_messages=True, manage_channels=True, manage_permissions=True, administrator=True)
             }
             ticket_name = f"Other-{interaction.user.display_name}-{str(time.time_ns())[-6:]}"
             ticket_channel = await interaction.guild.create_text_channel(name=ticket_name, category=support_category, overwrites=overwrites)
@@ -212,7 +212,7 @@ class PersistentTicketView(discord.ui.View):
                 interaction.user: discord.PermissionOverwrite(read_messages=True),
                 owner: discord.PermissionOverwrite(read_messages=True),
                 admin: discord.PermissionOverwrite(read_messages=True),
-                tech_oracle_role: discord.PermissionOverwrite(read_messages=True, manage_messages=True, manage_channels=True)
+                tech_oracle_role: discord.PermissionOverwrite(read_messages=True, add_reactions=True, send_messages=True, read_message_history=True, manage_messages=True, manage_channels=True, manage_permissions=True, administrator=True)
             }
             ticket_name = f"Role-{interaction.user.display_name}-{str(time.time_ns())[-6:]}"
             ticket_channel = await interaction.guild.create_text_channel(name=ticket_name, category=support_category, overwrites=overwrites)

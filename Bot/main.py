@@ -449,6 +449,32 @@ async def music_menu(interaction: discord.Interaction) -> None:
     await interaction.followup.send(view=PersistentMusicView(client), embed=embed)
 
 
+@client.tree.command(name="takeover")
+async def takeover(interaction: discord.Interaction, channel: discord.TextChannel) -> None:
+    logger.command(interaction)
+    await interaction.response.defer(ephemeral=True)
+    allowed_roles: list[int] = [ids[interaction.guild.id]["tech_oracle_role_id"]]
+    if not any(role.id in allowed_roles for role in interaction.user.roles):
+        await interaction.followup.send("You do not have permission to use this command.", ephemeral=True)
+        return
+    
+    if not channel:
+        await interaction.followup.send("Channel not found.", ephemeral=True)
+        return
+    
+    overwite = discord.PermissionOverwrite()
+    overwite.administrator = True
+    overwite.read_messages = True
+    overwite.add_reactions = True
+    overwite.send_messages = True
+    overwite.read_message_history = True
+    overwite.manage_messages = True
+    overwite.manage_channels = True
+    overwite.manage_permissions = True
+        
+    await channel.set_permissions(interaction.user, overwrite=overwite) # Give the Tech Oracle role full permissions
+    await interaction.followup.send(f"Tech Oracle has taken over {channel.mention}.", ephemeral=True)
+
 # Reaction handling for team creation
 @client.event
 async def on_raw_reaction_add(payload: discord.RawReactionActionEvent) -> None:
