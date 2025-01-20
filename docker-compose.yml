@@ -1,0 +1,8 @@
+services:
+  main:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dreamy-bot
+    volumes:
+      - ./dreamy-data:/dreamy-data
