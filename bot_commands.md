@@ -2,7 +2,7 @@
 
 ## Commands
 
-### Team Management:
+### Team Management
 
 - **/Createteam `<member>` `<emoji>`**
   - This command creates a team consisting of a maximum of 8 player, the command has 2 arguments and that is a member that will lead th team (this can be anyone on the server) and a emoji that is used an a reaction button.
@@ -21,7 +21,7 @@
   - This command closes an excising team and removes the message from the server. The selected leader's team must be locked beforehand otherwise it will not be closed
   - -# The command requires you to be an event luminary or above to use
 
-### Ticket Management:
+### Ticket Management
 
 - **/Ticket_menu**
   - This command will create a ticket_menu in the channel that the command was used, this will result in a message with instructions on how to create a ticket and a button that will allow a user to create a ticket
@@ -32,13 +32,13 @@
   - **ONLY use this command in case the close button does not work**
   - -# This command requires you to be an sky guardian or above to use
 
+### Music Management
 
-### Music Management:
 - **/Music_menu**
   - This command creates an music menu in the current channel that will allow anyone to control the music part of the bot. this menu has 6 buttons that all effect the player in some way, shape of form
   - -# This command requires you to be an sky guardian or above to use
 
-### General Commands (that anyone can use):
+### General Commands (that anyone can use)
 
 - **/Help**
   - This command shows a simple help menu of all of the available commands
@@ -49,4 +49,4 @@
 - **/Timers**
   - This command will show a small text that links to the #🌙enchanted-realm-repository channel
   
--# this bot is mostly made by @spamboi2000 and @femboipet 
+-# this bot is mostly made by @spamboi2000 and @femboipet
