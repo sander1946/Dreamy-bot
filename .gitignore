@@ -10,3 +10,4 @@ bot_commands.pdf
 /Server-assets
 *.pdf
 /logs
+*.log
