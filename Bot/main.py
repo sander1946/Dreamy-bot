@@ -92,6 +92,7 @@ async def on_ready() -> None:
     logger.debug("Syncing slash commands...")
     await client.tree.sync()  # Sync slash commands
     logger.log("PRINT", f"Bot is ready as {client.user}")
+    logger.log("PRINT", f"Bot is connected to {len(client.guilds)} guilds.")
 
 
 @client.tree.command(name="help", description="Lists all available commands.")
