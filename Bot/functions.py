@@ -73,7 +73,7 @@ async def send_message_to_user(client: commands.Bot, user_id: int, message: str)
 # Function to save the transcript of a ticket
 async def save_transcript(channel: discord.TextChannel, ticket_logs: str) -> str:
     logger.info(f"Saving transcript for ticket {channel.name}")
-    _dir = os.path.dirname(__file__)
+    _dir = "/dreamy-data"
     path = f"{_dir}/tickets/{channel.name}/transcript-{channel.name}.txt"
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
@@ -97,7 +97,7 @@ async def save_transcript(channel: discord.TextChannel, ticket_logs: str) -> str
 
 async def save_attachments(channel: discord.TextChannel) -> str:
     logger.info(f"Saving attachments for ticket {channel.name}")
-    _dir = os.path.dirname(__file__)
+    _dir = "/dreamy-data"
     path = f"{_dir}/tickets/{channel.name}/"
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
@@ -125,7 +125,7 @@ async def save_attachments(channel: discord.TextChannel) -> str:
 
 async def zip_files(channel: discord.TextChannel) -> str:
     logger.info(f"Zipping files for ticket {channel.name}")
-    _dir = os.path.dirname(__file__)
+    _dir = "/dreamy-data"
     path = f"{_dir}/tickets/{channel.name}/"
     os.makedirs(os.path.dirname(path), exist_ok=True)
     filepaths = await save_attachments(channel)

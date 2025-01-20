@@ -51,7 +51,7 @@ client = commands.Bot(command_prefix="!", intents=intents)
 
 
 # load the command whitelist
-dir = os.path.dirname(__file__)
+dir = "/dreamy-data"
 with open(f"{dir}/whitelist.json", "r") as file:
     command_whitelist = json.load(file)["no_error_commands"]
 
