@@ -9,6 +9,8 @@ RUN ["apt-get", "update"]
 # Install git
 RUN apt-get install git -y
 
+COPY ./.gitconfig /root/.gitconfig
+
 RUN git config --global --add safe.directory /dreamy-bot
 
 # Run the bot
