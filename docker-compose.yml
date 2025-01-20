@@ -1,8 +1,19 @@
 services:
-  main:
+  updater:
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: dreamy-bot
+      dockerfile: Updater.Dockerfile
+    # container_name: dreamy-updater
     volumes:
+      - ./:/dreamy-bot
+  bot:
+    depends_on:
+      updater:
+        condition: service_completed_successfully
+    build:
+      context: .
+      dockerfile: Bot.Dockerfile
+    # container_name: dreamy-bot
+    volumes:
+      - ./:/dreamy-bot
       - ./dreamy-data:/dreamy-data
