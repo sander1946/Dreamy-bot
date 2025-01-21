@@ -7,6 +7,8 @@ services:
     volumes:
       - ./:/dreamy-bot
   bot:
+    env_file:
+      - Bot/.env
     depends_on:
       updater:
         condition: service_completed_successfully
