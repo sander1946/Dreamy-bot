@@ -3,7 +3,7 @@ FROM python:3.13-slim-bullseye
 # Set the working directory
 WORKDIR /dreamy-bot/Bot
 
-# copy the requirements file
+# Copy the requirements file
 COPY requirements.txt .
 
 # Install the requirements
