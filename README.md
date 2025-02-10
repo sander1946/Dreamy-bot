@@ -1,3 +1,5 @@
+# **!!!! This Repo has moved to [Dreamy-Sky-Sanctuary/DreamyDiscordBot](https://github.com/Dreamy-Sky-Sanctuary/DreamyDiscordBot) !!!!** 
+
 ## This bot is used on the official Dreamy Sky Sanctuary discord server, the bot offers the following features
 - An fully working ticket system with an logging system
 - An team creation system
